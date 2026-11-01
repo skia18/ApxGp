@@ -1,169 +1,186 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  driverQuery,
+  currentSeasonQuery,
+  driverStandingsQuery,
+} from "@/api/queries";
+import { driverById } from "@/data/drivers";
 import { constructorById } from "@/data/constructors";
-import { driverById, nationalityFlag, driversForTeam } from "@/data/drivers";
-import { driverStandingById, driverStandings } from "@/data/standings";
-import { carsForTeam } from "@/data/cars";
-import { notFound } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/grid_/drivers/$driverId")({
-  head: ({ params }) => {
-    const dr = driverById(params.driverId);
-    return {
-      meta: [
-        { title: dr ? `${dr.name} — The Grid | Apex F1` : "Driver — The Grid | Apex F1" },
-        { name: "description", content: dr ? `${dr.name}, ${dr.nationality}, career statistics and season-by-season team history.` : "Driver profile." },
-        { property: "og:title", content: dr ? `${dr.name} — Apex F1` : "Driver — Apex F1" },
-        { property: "og:description", content: dr ? `Career stats, titles and team history for ${dr.name}.` : "Driver profile." },
-        { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-    };
-  },
-  loader: ({ params }) => {
-    if (!driverById(params.driverId)) throw notFound();
-  },
-  notFoundComponent: () => (
-    <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-      <p className="headline text-3xl">Driver not found</p>
-      <Link to="/grid" className="mt-6 inline-block text-sm font-semibold text-primary">Back to The Grid →</Link>
-    </div>
-  ),
+  head: ({ params }) => ({
+    meta: [
+      { title: `${params.driverId} — The Grid | Apex F1` },
+      {
+        name: "description",
+        content:
+          "Driver profile and current championship standing from the Apex F1 API.",
+      },
+    ],
+  }),
   component: DriverProfilePage,
 });
 
 function DriverProfilePage() {
   const { driverId } = Route.useParams();
-  const driver = driverById(driverId)!;
-  const team = constructorById(driver.teamId);
-  const standing = driverStandingById(driver.id);
-  const championshipPos = driverStandings.findIndex((s) => s.driverId === driver.id) + 1;
-  const teamMate = driversForTeam(driver.teamId).find((d) => d.id !== driver.id);
-  const teamCars = carsForTeam(driver.teamId);
+  const driver = useQuery(driverQuery(driverId));
+  const season = useQuery(currentSeasonQuery());
+  const standings = useQuery({
+    ...driverStandingsQuery(season.data?.year ?? 0),
+    enabled: Boolean(season.data),
+  });
+  const standing = standings.data?.find((row) => row.driver.slug === driverId);
+  const editorial = driverById(driverId);
+  const editorialTeam = standing?.constructor
+    ? constructorById(standing.constructor.slug)
+    : undefined;
+
+  if (driver.isPending)
+    return (
+      <ProfileStatus
+        title="Loading driver…"
+        message="Fetching this profile from the Apex F1 API."
+      />
+    );
+  if (driver.error)
+    return (
+      <ProfileStatus
+        title="Driver unavailable"
+        message={driver.error.message}
+        retry={() => void driver.refetch()}
+      />
+    );
+  if (!driver.data)
+    return (
+      <ProfileStatus
+        title="Driver not found"
+        message="The API did not return a driver for this identifier."
+      />
+    );
+  const item = driver.data;
 
   return (
     <div>
-      {/* Hero */}
       <section
         className="border-b border-border"
         style={{
-          background: `linear-gradient(180deg, ${team?.color}22 0%, transparent 60%)`,
+          background: `linear-gradient(180deg, ${editorialTeam?.color ?? "#ffffff"}22 0%, transparent 60%)`,
         }}
       >
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-          <Link to="/grid" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground">
+          <Link
+            to="/grid"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to The Grid
           </Link>
           <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
             <div>
-              <p className="tabular text-6xl font-bold" style={{ color: team?.color }}>
-                {driver.number}
+              <p className="tabular text-6xl font-bold text-muted-foreground">
+                {item.permanentNumber ?? "—"}
               </p>
-              <h1 className="headline mt-3 text-4xl sm:text-6xl">{driver.name}</h1>
+              <h1 className="headline mt-3 text-4xl sm:text-6xl">
+                {item.givenName} {item.familyName}
+              </h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                {nationalityFlag(driver.countryCode)} {driver.nationality} · {team?.name} · {driver.abbreviation}
+                {item.nationality}
+                {standing?.constructor ? ` · ${standing.constructor.name}` : ""}
+                {item.code ? ` · ${item.code}` : ""}
               </p>
             </div>
             <div className="flex gap-3">
-              <HeroStat label={`${seasonPosLabel(championshipPos)}`} value={`${standing?.points ?? 0} pts`} />
-              <HeroStat label="Wins" value={String(driver.raceWins)} />
-              <HeroStat label="Podiums" value={String(driver.podiums)} />
-              <HeroStat label="Titles" value={String(driver.worldTitles)} />
+              <Stat
+                label="Championship"
+                value={standing ? `P${standing.position}` : "—"}
+              />
+              <Stat label="Points" value={String(standing?.points ?? 0)} />
+              <Stat label="Season wins" value={String(standing?.wins ?? 0)} />
             </div>
           </div>
         </div>
       </section>
-
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <section className="grid gap-10 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <h2 className="headline text-xl">Profile</h2>
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{driver.bio}</p>
-
-            <h2 className="headline mt-10 text-xl">Season-by-season team history</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Team relationships are season-specific — a driver's current team is not extended backwards through their career.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {driver.seasonHistory.map((h, i, arr) => {
-                const prev = arr[i - 1];
-                const changed = !prev || prev.teamId !== h.teamId;
-                const c = constructorById(h.teamId);
-                return (
-                  <span
-                    key={h.season}
-                    className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1.5 text-[11px] ${
-                      changed ? "border-muted-foreground/40 bg-secondary" : "border-border/60 text-muted-foreground"
-                    }`}
-                    title={changed ? "Joined" : ""}
-                  >
-                    <span className="tabular">{h.season}</span>
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c?.color }} />
-                    {c?.name}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-
-          <aside className="space-y-6">
-            <div className="panel p-5">
-              <h3 className="headline text-sm">Career statistics</h3>
-              <dl className="mt-4 space-y-3">
-                <Row label="Debut" value={String(driver.debutYear)} />
-                <Row label="Race starts" value={String(driver.raceStarts)} />
-                <Row label="Race wins" value={String(driver.raceWins)} />
-                <Row label="Podiums" value={String(driver.podiums)} />
-                <Row label="Pole positions" value={String(driver.polePositions)} />
-                <Row label="World titles" value={String(driver.worldTitles)} />
-              </dl>
-            </div>
-
-            <div className="panel p-5">
-              <h3 className="headline text-sm">{team?.name}</h3>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{team?.shortHistory}</p>
-              <Link
-                to="/grid/constructors/$teamId"
-                params={{ teamId: driver.teamId }}
-                className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary"
-              >
-                Team profile <ArrowRight className="h-3 w-3" />
-              </Link>
-              {teamMate && (
-                <p className="mt-4 border-t border-border pt-4 text-xs text-muted-foreground">
-                  Team-mate:{" "}
-                  <Link to="/grid/drivers/$driverId" params={{ driverId: teamMate.id }} className="font-semibold text-foreground hover:text-primary">
-                    {teamMate.name}
-                  </Link>
+            <h2 className="headline text-xl">Driver details</h2>
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Fact label="Driver code" value={item.code ?? "Not available"} />
+              <Fact
+                label="Permanent number"
+                value={
+                  item.permanentNumber
+                    ? String(item.permanentNumber)
+                    : "Not available"
+                }
+              />
+              <Fact label="Nationality" value={item.nationality} />
+              <Fact
+                label="Date of birth"
+                value={
+                  item.dateOfBirth
+                    ? new Date(item.dateOfBirth).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "Not available"
+                }
+              />
+            </dl>
+            {editorial?.bio && (
+              <div className="mt-10">
+                <p className="eyebrow text-[10px] text-muted-foreground">
+                  Editorial profile
                 </p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {editorial.bio}
+                </p>
+              </div>
+            )}
+          </div>
+          <aside className="space-y-4">
+            <div className="panel p-5">
+              <h3 className="headline text-sm">
+                {season.data ? `${season.data.year} season` : "Current season"}
+              </h3>
+              {standings.isPending ? (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Loading championship standing…
+                </p>
+              ) : standings.error ? (
+                <p className="mt-3 text-xs text-primary">
+                  Standing unavailable.
+                </p>
+              ) : (
+                <dl className="mt-4 space-y-3">
+                  <Row
+                    label="Position"
+                    value={standing ? `P${standing.position}` : "Not ranked"}
+                  />
+                  <Row label="Points" value={String(standing?.points ?? 0)} />
+                  <Row label="Wins" value={String(standing?.wins ?? 0)} />
+                </dl>
               )}
             </div>
-
-            <div className="panel p-5">
-              <h3 className="headline text-sm">Car {driver.number} drives</h3>
-              <div className="mt-3 space-y-2">
-                {teamCars.map((c) => (
-                  <Link
-                    key={c.id}
-                    to="/garage/$carId"
-                    params={{ carId: c.id }}
-                    className="flex items-center justify-between rounded-sm border border-border px-3 py-2.5 text-xs font-semibold transition-colors hover:border-primary/60"
-                  >
-                    <span>{c.designation} · {c.season}</span>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                  </Link>
-                ))}
-                {teamCars[0] && (
-                  <Link
-                    to="/garage/$carId/viewer"
-                    params={{ carId: teamCars[0].id }}
-                    className="block rounded-sm bg-primary px-3 py-2.5 text-center text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-racing-red-bright"
-                  >
-                    Explore in 3D
-                  </Link>
-                )}
+            {standing?.constructor && (
+              <div className="panel p-5">
+                <h3 className="headline text-sm">
+                  {standing.constructor.name}
+                </h3>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {standing.constructor.nationality}
+                </p>
+                <Link
+                  to="/grid/constructors/$teamId"
+                  params={{ teamId: standing.constructor.slug }}
+                  className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary"
+                >
+                  Team profile <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
-            </div>
+            )}
           </aside>
         </section>
       </div>
@@ -171,9 +188,39 @@ function DriverProfilePage() {
   );
 }
 
-const seasonPosLabel = (pos: number) => (pos > 0 ? `P${pos} in championship` : "—");
-
-function HeroStat({ label, value }: { label: string; value: string }) {
+function ProfileStatus({
+  title,
+  message,
+  retry,
+}: {
+  title: string;
+  message: string;
+  retry?: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-20 text-center">
+      <p className="headline text-3xl">{title}</p>
+      <p className="mt-3 text-sm text-muted-foreground">{message}</p>
+      {retry && (
+        <button
+          onClick={retry}
+          className="mt-5 bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground"
+        >
+          Try again
+        </button>
+      )}
+      <div>
+        <Link
+          to="/grid"
+          className="mt-6 inline-block text-sm font-semibold text-primary"
+        >
+          Back to The Grid →
+        </Link>
+      </div>
+    </div>
+  );
+}
+function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-border bg-card px-4 py-3 text-center">
       <p className="tabular text-lg font-bold">{value}</p>
@@ -181,7 +228,14 @@ function HeroStat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="panel p-4">
+      <dt className="eyebrow text-[9px] text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-sm font-semibold">{value}</dd>
+    </div>
+  );
+}
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">

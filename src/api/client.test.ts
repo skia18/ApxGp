@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, getCurrentSeason } from "./client";
+import {
+  ApiError,
+  getCurrentSeason,
+  getDriver,
+  listConstructors,
+  listDrivers,
+} from "./client";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -53,5 +59,32 @@ describe("API client", () => {
       requestId: "apx-123",
       message: "The requested season was not found.",
     });
+  });
+
+  it("reads grid collections and encodes profile identifiers", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ data: { items: [{ slug: "norris" }], total: 1 } }),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ data: { items: [{ slug: "mclaren" }], total: 1 } }),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { slug: "norris" } })),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(listDrivers()).resolves.toEqual([{ slug: "norris" }]);
+    await expect(listConstructors()).resolves.toEqual([{ slug: "mclaren" }]);
+    await getDriver("name/with space");
+
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+      "http://localhost:8081/api/v1/drivers/name%2Fwith%20space",
+    );
   });
 });

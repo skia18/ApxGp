@@ -1,11 +1,15 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
   getConstructorStandings,
+  getConstructor,
   getClassification,
   getCurrentSeason,
   getDriverStandings,
+  getDriver,
   getNextRace,
   listRaceSessions,
+  listConstructors,
+  listDrivers,
   listSeasonRaces,
 } from "./client";
 
@@ -41,6 +45,34 @@ export const constructorStandingsQuery = (year: number) =>
   queryOptions({
     queryKey: ["season", year, "constructor-standings"],
     queryFn: ({ signal }) => getConstructorStandings(year, signal),
+    staleTime: 5 * 60_000,
+  });
+
+export const driversQuery = () =>
+  queryOptions({
+    queryKey: ["drivers"],
+    queryFn: ({ signal }) => listDrivers(signal),
+    staleTime: 5 * 60_000,
+  });
+
+export const driverQuery = (driverId: string) =>
+  queryOptions({
+    queryKey: ["driver", driverId],
+    queryFn: ({ signal }) => getDriver(driverId, signal),
+    staleTime: 5 * 60_000,
+  });
+
+export const constructorsQuery = () =>
+  queryOptions({
+    queryKey: ["constructors"],
+    queryFn: ({ signal }) => listConstructors(signal),
+    staleTime: 5 * 60_000,
+  });
+
+export const constructorQuery = (teamId: string) =>
+  queryOptions({
+    queryKey: ["constructor", teamId],
+    queryFn: ({ signal }) => getConstructor(teamId, signal),
     staleTime: 5 * 60_000,
   });
 
