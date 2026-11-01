@@ -10,12 +10,15 @@ import (
 )
 
 type Config struct {
-	Environment        string
-	HTTPAddr           string
-	DatabaseURL        string
-	CORSAllowedOrigins []string
-	JolpicaBaseURL     string
-	HTTPTimeout        time.Duration
+	Environment         string
+	HTTPAddr            string
+	DatabaseURL         string
+	CORSAllowedOrigins  []string
+	JolpicaBaseURL      string
+	OpenF1BaseURL       string
+	OpenF1AccessToken   string
+	F1LiveTimingBaseURL string
+	HTTPTimeout         time.Duration
 }
 
 func Load() (Config, error) {
@@ -31,12 +34,15 @@ func Load() (Config, error) {
 	}
 
 	cfg := Config{
-		Environment:        environment,
-		HTTPAddr:           value("APEX_HTTP_ADDR", ":8081"),
-		DatabaseURL:        strings.TrimSpace(os.Getenv("APEX_DATABASE_URL")),
-		CORSAllowedOrigins: csv(value("APEX_CORS_ALLOWED_ORIGINS", defaultAllowedOrigins)),
-		JolpicaBaseURL:     strings.TrimRight(value("APEX_JOLPICA_BASE_URL", "https://api.jolpi.ca/ergast/f1"), "/"),
-		HTTPTimeout:        timeout,
+		Environment:         environment,
+		HTTPAddr:            value("APEX_HTTP_ADDR", ":8081"),
+		DatabaseURL:         strings.TrimSpace(os.Getenv("APEX_DATABASE_URL")),
+		CORSAllowedOrigins:  csv(value("APEX_CORS_ALLOWED_ORIGINS", defaultAllowedOrigins)),
+		JolpicaBaseURL:      strings.TrimRight(value("APEX_JOLPICA_BASE_URL", "https://api.jolpi.ca/ergast/f1"), "/"),
+		OpenF1BaseURL:       strings.TrimRight(value("APEX_OPENF1_BASE_URL", "https://api.openf1.org/v1"), "/"),
+		OpenF1AccessToken:   strings.TrimSpace(os.Getenv("APEX_OPENF1_ACCESS_TOKEN")),
+		F1LiveTimingBaseURL: strings.TrimRight(value("APEX_F1_LIVE_TIMING_BASE_URL", "http://localhost:3002"), "/"),
+		HTTPTimeout:         timeout,
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("APEX_DATABASE_URL is required")

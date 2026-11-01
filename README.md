@@ -23,6 +23,10 @@ npm install
 npm run dev
 ```
 
+`npm run dev` starts the frontend, Go backend, and racecar live-timing
+sidecar together. Manage local Supabase separately with the `database:*`
+commands.
+
 This project uses npm. Commit `package-lock.json` and use `npm ci` for CI and
 repeatable production installs.
 
@@ -33,5 +37,5 @@ contract, SQL migrations, provider clients and local setup are documented
 there. Lovable can continue editing the frontend without restructuring it.
 
 Database migrations are canonical under [`supabase/migrations`](supabase/migrations).
-Use `npm run db:start` and `npm run db:reset` to verify them against local
+Use `npm run database:start` and `npm run database:reset` to verify them against local
 Supabase before pushing them to the hosted project.

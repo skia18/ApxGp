@@ -7,6 +7,7 @@ import {
   getDriverStandings,
   getDriver,
   getNextRace,
+  getLiveTiming,
   listRaceSessions,
   listConstructors,
   listDrivers,
@@ -88,4 +89,13 @@ export const classificationQuery = (sessionId: string) =>
     queryKey: ["session", sessionId, "classification"],
     queryFn: ({ signal }) => getClassification(sessionId, signal),
     staleTime: 5 * 60_000,
+  });
+
+export const liveTimingQuery = () =>
+  queryOptions({
+    queryKey: ["live-timing"],
+    queryFn: ({ signal }) => getLiveTiming(signal),
+    staleTime: 3_000,
+    refetchInterval: 4_000,
+    retry: 1,
   });

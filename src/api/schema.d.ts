@@ -123,6 +123,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/live/timing": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get the latest timing snapshot from the configured live provider */
+    get: operations["getLiveTiming"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/drivers": {
     parameters: {
       query?: never;
@@ -413,6 +430,32 @@ export interface components {
         freshness?: components["schemas"]["Freshness"];
       };
     };
+    LiveTimingRow: {
+      position: number;
+      driverNumber: number;
+      driverCode: string;
+      driverName: string;
+      teamName: string;
+      teamColour?: string;
+      lapNumber?: number;
+      gapToLeader?: string;
+      interval?: string;
+      lastLapSeconds?: number;
+      bestLapSeconds?: number;
+      sectors: (number | null)[];
+    };
+    LiveTiming: {
+      sessionKey: number;
+      meetingKey: number;
+      sessionName: string;
+      /** Format: date-time */
+      updatedAt: string;
+      rows: components["schemas"]["LiveTimingRow"][];
+      freshness: components["schemas"]["Freshness"];
+    };
+    LiveTimingResponse: {
+      data: components["schemas"]["LiveTiming"];
+    };
   };
   responses: {
     /** @description Invalid request */
@@ -623,6 +666,27 @@ export interface operations {
         };
       };
       404: components["responses"]["NotFound"];
+    };
+  };
+  getLiveTiming: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Latest live timing snapshot */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LiveTimingResponse"];
+        };
+      };
+      503: components["responses"]["ServiceUnavailable"];
     };
   };
   listDrivers: {

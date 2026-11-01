@@ -35,7 +35,11 @@ type ClassificationService interface {
 	Classification(context.Context, string) (domain.Classification, error)
 }
 
-func NewRouter(health HealthChecker, calendar CalendarService, grid GridService, classifications ClassificationService, allowedOrigins []string) http.Handler {
+type LiveTimingService interface {
+	Timing(context.Context) (domain.LiveTiming, error)
+}
+
+func NewRouter(health HealthChecker, calendar CalendarService, grid GridService, classifications ClassificationService, liveTiming LiveTimingService, allowedOrigins []string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health/live", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -135,6 +139,14 @@ func NewRouter(health HealthChecker, calendar CalendarService, grid GridService,
 	mux.HandleFunc("GET /api/v1/sessions/{sessionId}/classification", func(w http.ResponseWriter, r *http.Request) {
 		item, err := classifications.Classification(r.Context(), r.PathValue("sessionId"))
 		if handleRepositoryError(w, r, err, "classification") {
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"data": item})
+	})
+	mux.HandleFunc("GET /api/v1/live/timing", func(w http.ResponseWriter, r *http.Request) {
+		item, err := liveTiming.Timing(r.Context())
+		if err != nil {
+			writeError(w, r, http.StatusServiceUnavailable, "live_timing_unavailable", "The live timing provider is unavailable.")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"data": item})

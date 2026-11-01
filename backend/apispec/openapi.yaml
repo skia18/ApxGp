@@ -124,6 +124,17 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ClassificationResponse" }
         "404": { $ref: "#/components/responses/NotFound" }
+  /api/v1/live/timing:
+    get:
+      operationId: getLiveTiming
+      summary: Get the latest timing snapshot from the configured live provider
+      responses:
+        "200":
+          description: Latest live timing snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LiveTimingResponse" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
   /api/v1/drivers:
     get:
       operationId: listDrivers
@@ -527,3 +538,41 @@ components:
                   { $ref: "#/components/schemas/QualifyingClassification" },
               }
             freshness: { $ref: "#/components/schemas/Freshness" }
+    LiveTimingRow:
+      type: object
+      required:
+        [position, driverNumber, driverCode, driverName, teamName, sectors]
+      properties:
+        position: { type: integer }
+        driverNumber: { type: integer }
+        driverCode: { type: string }
+        driverName: { type: string }
+        teamName: { type: string }
+        teamColour: { type: string }
+        lapNumber: { type: integer }
+        gapToLeader: { type: string }
+        interval: { type: string }
+        lastLapSeconds: { type: number }
+        bestLapSeconds: { type: number }
+        sectors:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items: { type: [number, "null"] }
+    LiveTiming:
+      type: object
+      required:
+        [sessionKey, meetingKey, sessionName, updatedAt, rows, freshness]
+      properties:
+        sessionKey: { type: integer }
+        meetingKey: { type: integer }
+        sessionName: { type: string }
+        updatedAt: { type: string, format: date-time }
+        rows:
+          { type: array, items: { $ref: "#/components/schemas/LiveTimingRow" } }
+        freshness: { $ref: "#/components/schemas/Freshness" }
+    LiveTimingResponse:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/LiveTiming" }

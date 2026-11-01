@@ -3,6 +3,7 @@ import {
   ApiError,
   getCurrentSeason,
   getDriver,
+  getLiveTiming,
   listConstructors,
   listDrivers,
 } from "./client";
@@ -86,5 +87,29 @@ describe("API client", () => {
     expect(fetchMock.mock.calls[2]?.[0]).toBe(
       "http://localhost:8081/api/v1/drivers/name%2Fwith%20space",
     );
+  });
+
+  it("unwraps the live timing snapshot", async () => {
+    const snapshot = {
+      sessionKey: 123,
+      meetingKey: 45,
+      sessionName: "Race",
+      updatedAt: "2026-11-01T12:00:00Z",
+      rows: [],
+      freshness: {
+        source: "openf1",
+        retrievedAt: "2026-11-01T12:00:01Z",
+        stale: false,
+      },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ data: snapshot }), { status: 200 }),
+        ),
+    );
+    await expect(getLiveTiming()).resolves.toEqual(snapshot);
   });
 });

@@ -18,6 +18,11 @@ func (f fakeHealth) Ping(context.Context) error { return f.err }
 type fakeCalendar struct{}
 type fakeGrid struct{}
 type fakeClassifications struct{}
+type fakeLiveTiming struct{}
+
+func (fakeLiveTiming) Timing(context.Context) (domain.LiveTiming, error) {
+	return domain.LiveTiming{SessionKey: 123, Rows: []domain.LiveTimingRow{}}, nil
+}
 
 func (fakeClassifications) Sessions(context.Context, string) ([]domain.Session, error) {
 	return []domain.Session{}, nil
@@ -54,7 +59,7 @@ func (fakeCalendar) NextRace(context.Context, time.Time) (domain.Race, *domain.F
 func TestLiveHealth(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/health/live", nil)
 	response := httptest.NewRecorder()
-	NewRouter(fakeHealth{}, fakeCalendar{}, fakeGrid{}, fakeClassifications{}, nil).ServeHTTP(response, request)
+	NewRouter(fakeHealth{}, fakeCalendar{}, fakeGrid{}, fakeClassifications{}, fakeLiveTiming{}, nil).ServeHTTP(response, request)
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d", response.Code)
 	}
@@ -63,8 +68,17 @@ func TestLiveHealth(t *testing.T) {
 func TestRejectsInvalidSeason(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/seasons/nope/races", nil)
 	response := httptest.NewRecorder()
-	NewRouter(fakeHealth{}, fakeCalendar{}, fakeGrid{}, fakeClassifications{}, nil).ServeHTTP(response, request)
+	NewRouter(fakeHealth{}, fakeCalendar{}, fakeGrid{}, fakeClassifications{}, fakeLiveTiming{}, nil).ServeHTTP(response, request)
 	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+}
+
+func TestLiveTiming(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/live/timing", nil)
+	response := httptest.NewRecorder()
+	NewRouter(fakeHealth{}, fakeCalendar{}, fakeGrid{}, fakeClassifications{}, fakeLiveTiming{}, nil).ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
 	}
 }

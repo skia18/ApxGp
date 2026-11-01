@@ -5,7 +5,7 @@ import {
   RaceStatusBadge,
   SampleDataBadge,
 } from "@/components/f1/RaceStatusBadge";
-import { TimingTable } from "@/components/f1/TimingTable";
+import { LiveTimingTable } from "@/components/f1/TimingTable";
 import { CircuitMap } from "@/components/f1/CircuitMap";
 import {
   LapProgressionChart,
@@ -16,7 +16,7 @@ import {
 import { PageTitle } from "@/components/f1/SectionHeading";
 import { DriverIdentity } from "@/components/f1/Identity";
 import { Countdown } from "@/components/f1/Countdown";
-import { sampleTimingRows, sampleStrategy, sampleSession } from "@/data/timing";
+import { sampleStrategy, sampleSession } from "@/data/timing";
 import { circuitById } from "@/data/circuits";
 import { driverById, drivers } from "@/data/drivers";
 import type { SessionState } from "@/data/types";
@@ -27,6 +27,7 @@ import {
   nextRaceQuery,
   raceSessionsQuery,
   seasonRacesQuery,
+  liveTimingQuery,
 } from "@/api/queries";
 
 export const Route = createFileRoute("/race-centre")({
@@ -45,7 +46,7 @@ export const Route = createFileRoute("/race-centre")({
       {
         name: "description",
         content:
-          "Upcoming Grand Prix, session schedule, sample live timing leaderboard, circuit visualisation and strategy analysis.",
+          "Upcoming Grand Prix, OpenF1 timing leaderboard, session results, circuit visualisation and strategy analysis.",
       },
       { property: "og:title", content: "Race Centre — Apex F1" },
       {
@@ -95,12 +96,15 @@ function RaceCentre() {
   });
   const circuit = circuitById(race.circuit.slug.replaceAll("_", "-"));
   const eventState = getEventState(race);
-  const [view, setView] = useState<View>("overview");
+  const [view, setView] = useState<View>("timing");
+  const liveTiming = useQuery({
+    ...liveTimingQuery(),
+    enabled: view === "timing",
+  });
   const [sessionState, setSessionState] = useState<SessionState>("live");
   const [selectedDriver, setSelectedDriver] = useState<string>(drivers[0]!.id);
 
   // Sample datasets are deterministic; memoise so table and panels agree.
-  const timingRows = useMemo(() => sampleTimingRows(), []);
   const strategy = useMemo(() => sampleStrategy(), []);
 
   const selected = driverById(selectedDriver);
@@ -202,7 +206,7 @@ function RaceCentre() {
             </button>
           ))}
         </nav>
-        {view !== "overview" && view !== "results" && (
+        {(view === "circuit" || view === "strategy") && (
           <div className="flex items-center gap-3">
             <SampleDataBadge />
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -224,20 +228,6 @@ function RaceCentre() {
           </div>
         )}
       </div>
-
-      {view === "timing" && sessionState === "unavailable" ? (
-        <div className="panel mt-8 flex flex-col items-center justify-center p-16 text-center">
-          <p className="headline text-xl">Feed unavailable</p>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            No timing feed is connected for this session yet. Views are shown
-            with clearly labelled sample data once a feed is integrated.
-          </p>
-        </div>
-      ) : view === "timing" && sessionState === "delayed" ? (
-        <div className="panel mt-4 border-l-2 border-signal-amber p-3 text-xs text-signal-amber">
-          Timing data is delayed — positions and gaps shown are not real-time.
-        </div>
-      ) : null}
 
       {view === "overview" && (
         <Overview
@@ -261,41 +251,54 @@ function RaceCentre() {
           classificationError={classification.error}
         />
       )}
-      {view === "timing" && sessionState !== "unavailable" && (
+      {view === "timing" && (
         <section className="mt-6 space-y-4">
-          {sessionState === "upcoming" && (
-            <div className="panel p-10 text-center">
-              <p className="headline text-xl">Session not started</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                The leaderboard appears here when the session goes live. Preview
-                with the sample dataset below.
-              </p>
-            </div>
-          )}
-          <div className="panel">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
-              <p className="headline text-sm">Timing tower</p>
-              <p className="text-xs text-muted-foreground">
-                Sample dataset · click a row to follow that driver across
-                timing, circuit and strategy
-              </p>
-            </div>
-            <TimingTable
-              rows={timingRows}
-              selectedDriverId={selectedDriver}
-              onSelect={setSelectedDriver}
+          {liveTiming.isPending && (
+            <StatusPanel
+              title="Connecting to live timing"
+              message="Fetching the latest OpenF1 timing snapshot…"
             />
-          </div>
-          {selected && (
-            <div className="panel flex flex-wrap items-center justify-between gap-3 p-4">
-              <p className="text-sm">
-                Following <DriverIdentity driverId={selected.id} showNumber />
-              </p>
-              <p className="tabular text-xs text-muted-foreground">
-                {selectedStrategy
-                  ? `${selectedStrategy.stints.length} stints · last pit lap ${selectedStrategy.pitLaps.join(", ")}`
-                  : ""}
-              </p>
+          )}
+          {liveTiming.error && (
+            <StatusPanel
+              title="Live timing unavailable"
+              message={`${liveTiming.error.message} Real-time OpenF1 access requires a server-side subscription token.`}
+              tone="error"
+            />
+          )}
+          {liveTiming.data && liveTiming.data.rows.length === 0 && (
+            <StatusPanel
+              title="No timing data"
+              message="The provider returned no timing rows for its latest accessible session."
+            />
+          )}
+          {liveTiming.data && liveTiming.data.rows.length > 0 && (
+            <div className="panel">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+                <div>
+                  <p className="headline text-sm">
+                    {liveTiming.data.sessionName}
+                  </p>
+                  <p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {liveTiming.data.freshness.source === "f1-signalr"
+                      ? "F1 live timing"
+                      : "OpenF1"}{" "}
+                    · session {liveTiming.data.sessionKey}
+                  </p>
+                </div>
+                <p
+                  className={`tabular text-xs ${liveTiming.data.freshness.stale ? "text-signal-amber" : "text-muted-foreground"}`}
+                >
+                  {liveTiming.data.freshness.stale
+                    ? "Historical or delayed"
+                    : "Live"}{" "}
+                  · updated{" "}
+                  {new Date(liveTiming.data.updatedAt).toLocaleTimeString(
+                    "en-GB",
+                  )}
+                </p>
+              </div>
+              <LiveTimingTable timing={liveTiming.data} />
             </div>
           )}
         </section>

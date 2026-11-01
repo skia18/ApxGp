@@ -1,6 +1,7 @@
 import { constructorById } from "@/data/constructors";
 import { driverById } from "@/data/drivers";
 import type { TimingRow } from "@/data/types";
+import type { LiveTiming } from "@/api/client";
 
 function compoundColor(c: string | null): string {
   switch (c) {
@@ -17,6 +18,99 @@ function compoundColor(c: string | null): string {
     default:
       return "transparent";
   }
+}
+
+function formatSeconds(value?: number): string {
+  if (value === undefined) return "—";
+  const minutes = Math.floor(value / 60);
+  return `${minutes}:${(value - minutes * 60).toFixed(3).padStart(6, "0")}`;
+}
+
+export function LiveTimingTable({ timing }: { timing: LiveTiming }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[820px] border-collapse">
+        <thead>
+          <tr className="border-b border-border text-left text-[10px] uppercase tracking-widest text-muted-foreground">
+            <th className="py-2.5 pl-3 pr-2 font-semibold">Pos</th>
+            <th className="px-2 py-2.5 font-semibold">No.</th>
+            <th className="px-2 py-2.5 font-semibold">Driver</th>
+            <th className="hidden px-2 py-2.5 font-semibold md:table-cell">
+              Constructor
+            </th>
+            <th className="px-2 py-2.5 text-right font-semibold">Lap</th>
+            <th className="px-2 py-2.5 text-right font-semibold">Gap</th>
+            <th className="px-2 py-2.5 text-right font-semibold">Interval</th>
+            <th className="px-2 py-2.5 text-right font-semibold">Last</th>
+            <th className="px-2 py-2.5 text-right font-semibold">Best</th>
+            <th className="hidden px-2 py-2.5 text-center font-semibold lg:table-cell">
+              S1 / S2 / S3
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {timing.rows.map((row) => (
+            <tr
+              key={row.driverNumber}
+              className="border-b border-border/40 last:border-0 hover:bg-accent/60"
+            >
+              <td className="py-2.5 pl-3 pr-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-4 w-1 rounded-full"
+                    style={{
+                      backgroundColor: row.teamColour
+                        ? `#${row.teamColour}`
+                        : undefined,
+                    }}
+                  />
+                  <span className="timing-cell font-semibold">
+                    {row.position}
+                  </span>
+                </div>
+              </td>
+              <td className="timing-cell px-2 text-muted-foreground">
+                {row.driverNumber}
+              </td>
+              <td className="px-2">
+                <span className="text-[13px] font-semibold">
+                  {row.driverCode}
+                  <span className="ml-2 hidden font-normal text-muted-foreground md:inline">
+                    {row.driverName}
+                  </span>
+                </span>
+              </td>
+              <td className="hidden px-2 md:table-cell">
+                <span className="text-[13px] text-muted-foreground">
+                  {row.teamName}
+                </span>
+              </td>
+              <td className="timing-cell px-2 text-right text-muted-foreground">
+                {row.lapNumber ?? "—"}
+              </td>
+              <td className="timing-cell px-2 text-right">
+                {row.gapToLeader ?? "—"}
+              </td>
+              <td className="timing-cell px-2 text-right text-muted-foreground">
+                {row.interval ?? "—"}
+              </td>
+              <td className="timing-cell px-2 text-right">
+                {formatSeconds(row.lastLapSeconds)}
+              </td>
+              <td className="timing-cell px-2 text-right text-signal-purple">
+                {formatSeconds(row.bestLapSeconds)}
+              </td>
+              <td className="timing-cell hidden px-2 text-center text-muted-foreground lg:table-cell">
+                {row.sectors
+                  .map((sector) => formatSeconds(sector ?? undefined))
+                  .join(" / ")}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export function TimingTable({

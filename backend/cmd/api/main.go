@@ -13,7 +13,9 @@ import (
 	"github.com/apex-f1/apex-f1/backend/internal/config"
 	"github.com/apex-f1/apex-f1/backend/internal/database"
 	"github.com/apex-f1/apex-f1/backend/internal/httpapi"
+	"github.com/apex-f1/apex-f1/backend/internal/providers/f1signalr"
 	"github.com/apex-f1/apex-f1/backend/internal/providers/jolpica"
+	"github.com/apex-f1/apex-f1/backend/internal/providers/openf1"
 	"github.com/apex-f1/apex-f1/backend/internal/repository"
 	"github.com/apex-f1/apex-f1/backend/internal/service"
 )
@@ -44,10 +46,13 @@ func main() {
 	calendarService := service.NewCalendar(calendarRepository, calendarRepository, provider)
 	gridService := service.NewGrid(gridRepository, provider)
 	classificationService := service.NewClassifications(classificationRepository, provider)
+	openF1Provider := openf1.NewClient(cfg.OpenF1BaseURL, cfg.OpenF1AccessToken, &http.Client{Timeout: cfg.HTTPTimeout})
+	signalRProvider := f1signalr.NewClient(cfg.F1LiveTimingBaseURL, &http.Client{Timeout: cfg.HTTPTimeout})
+	liveTimingService := service.NewLiveTiming(signalRProvider, openF1Provider)
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           httpapi.NewRouter(pool, calendarService, gridService, classificationService, cfg.CORSAllowedOrigins),
+		Handler:           httpapi.NewRouter(pool, calendarService, gridService, classificationService, liveTimingService, cfg.CORSAllowedOrigins),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,

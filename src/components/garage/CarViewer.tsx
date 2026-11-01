@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -7,6 +7,7 @@ import {
   Lightformer,
 } from "@react-three/drei";
 import * as THREE from "three";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { Car } from "@/data/types";
 
 /* ------------------------------------------------------------------ */
@@ -498,7 +499,7 @@ function CameraRig({
   controls,
 }: {
   view: { pos: [number, number, number]; target: [number, number, number] };
-  controls: React.MutableRefObject<any>;
+  controls: RefObject<OrbitControlsImpl | null>;
 }) {
   const desiredPos = useRef(new THREE.Vector3(...view.pos));
   const desiredTarget = useRef(new THREE.Vector3(...view.target));
@@ -533,7 +534,7 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
   const [hovered, setHovered] = useState<ComponentId | null>(null);
   const [autoRotate, setAutoRotate] = useState(true);
   const [viewName, setViewName] = useState<keyof typeof VIEWS>("three-quarter");
-  const controls = useRef<any>(null);
+  const controls = useRef<OrbitControlsImpl>(null);
 
   const view =
     (selected ? componentCameras[selected] : undefined) ?? VIEWS[viewName];

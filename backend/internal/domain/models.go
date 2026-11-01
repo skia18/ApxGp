@@ -142,3 +142,27 @@ type Classification struct {
 	Qualifying []QualifyingClassification `json:"qualifying,omitempty"`
 	Freshness  *Freshness                 `json:"freshness,omitempty"`
 }
+
+type LiveTimingRow struct {
+	Position       int         `json:"position"`
+	DriverNumber   int         `json:"driverNumber"`
+	DriverCode     string      `json:"driverCode"`
+	DriverName     string      `json:"driverName"`
+	TeamName       string      `json:"teamName"`
+	TeamColour     string      `json:"teamColour,omitempty"`
+	LapNumber      *int        `json:"lapNumber,omitempty"`
+	GapToLeader    *string     `json:"gapToLeader,omitempty"`
+	Interval       *string     `json:"interval,omitempty"`
+	LastLapSeconds *float64    `json:"lastLapSeconds,omitempty"`
+	BestLapSeconds *float64    `json:"bestLapSeconds,omitempty"`
+	Sectors        [3]*float64 `json:"sectors"`
+}
+
+type LiveTiming struct {
+	SessionKey  int             `json:"sessionKey"`
+	MeetingKey  int             `json:"meetingKey"`
+	SessionName string          `json:"sessionName"`
+	UpdatedAt   time.Time       `json:"updatedAt"`
+	Rows        []LiveTimingRow `json:"rows"`
+	Freshness   Freshness       `json:"freshness"`
+}

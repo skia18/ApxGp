@@ -21,13 +21,13 @@ Start local Supabase and apply every migration from `supabase/migrations`:
 
 ```sh
 cd ..
-npm run db:start
-npm run db:reset
+npm run database:start
+npm run database:reset
 ```
 
 The default local database URL is
 `postgresql://postgres:postgres@127.0.0.1:54322/postgres`. Use it for local API,
-ingestion and integration-test commands. `db:reset` destroys only the local
+ingestion and integration-test commands. `database:reset` destroys only the local
 Docker database, recreates it, and replays every migration in order.
 
 To deploy tested migrations, link the CLI to the hosted Supabase project once,
@@ -60,6 +60,7 @@ go vet ./...
 - `GET /api/v1/races/next`
 - `GET /api/v1/races/{raceId}/sessions`
 - `GET /api/v1/sessions/{sessionId}/classification`
+- `GET /api/v1/live/timing`
 - `GET /api/v1/drivers`
 - `GET /api/v1/drivers/{driverId}`
 - `GET /api/v1/teams`
@@ -68,6 +69,23 @@ go vet ./...
 - `GET /api/v1/seasons/{year}/constructor-standings`
 
 The canonical contract is [`apispec/openapi.yaml`](apispec/openapi.yaml).
+
+## Live timing
+
+Live timing snapshots are normalised from OpenF1 by the Go API and cached for
+four seconds. Historical/latest publicly accessible data works without a token.
+For real-time race-weekend data, set `APEX_OPENF1_ACCESS_TOKEN` only in the
+backend deployment environment. Never expose this value as a `VITE_*` variable.
+
+For local live timing, start the SignalR sidecar from the repository root:
+
+```sh
+npm run racecar:dev
+```
+
+The Go API connects to it at `http://localhost:3002` by default and falls back
+to OpenF1 if the sidecar is unavailable. Override the address with
+`APEX_F1_LIVE_TIMING_BASE_URL` when needed.
 
 ## Ingestion rules
 
