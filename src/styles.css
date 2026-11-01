@@ -1,0 +1,178 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Apex F1 design system — premium motorsport.
+ * Near-black graphite surfaces, off-white editorial type, restrained racing red.
+ * Timing data uses mono faces with tabular numerals.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-racing-red: var(--racing-red);
+  --color-racing-red-bright: var(--racing-red-bright);
+  --color-graphite: var(--graphite);
+  --color-graphite-elevated: var(--graphite-elevated);
+  --color-signal-green: var(--signal-green);
+  --color-signal-amber: var(--signal-amber);
+  --color-signal-blue: var(--signal-blue);
+  --color-signal-purple: var(--signal-purple);
+  --font-display: "Archivo", "Arial Narrow", sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: oklch(0.135 0.012 260);
+  --foreground: oklch(0.95 0.006 85);
+  --card: oklch(0.17 0.012 260);
+  --card-foreground: oklch(0.95 0.006 85);
+  --popover: oklch(0.16 0.012 260);
+  --popover-foreground: oklch(0.95 0.006 85);
+  --primary: oklch(0.55 0.2 27);
+  --primary-foreground: oklch(0.98 0.003 85);
+  --secondary: oklch(0.21 0.012 260);
+  --secondary-foreground: oklch(0.95 0.006 85);
+  --muted: oklch(0.19 0.012 260);
+  --muted-foreground: oklch(0.64 0.012 260);
+  --accent: oklch(0.23 0.014 260);
+  --accent-foreground: oklch(0.95 0.006 85);
+  --destructive: oklch(0.55 0.2 27);
+  --destructive-foreground: oklch(0.98 0.003 85);
+  --border: oklch(0.26 0.012 260);
+  --input: oklch(0.26 0.012 260);
+  --ring: oklch(0.55 0.2 27);
+  --racing-red: oklch(0.55 0.2 27);
+  --racing-red-bright: oklch(0.63 0.22 27);
+  --graphite: oklch(0.135 0.012 260);
+  --graphite-elevated: oklch(0.2 0.012 260);
+  --signal-green: oklch(0.72 0.17 145);
+  --signal-amber: oklch(0.78 0.16 85);
+  --signal-blue: oklch(0.7 0.14 240);
+  --signal-purple: oklch(0.68 0.16 300);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--racing-red);
+    color: var(--primary-foreground);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ---- Editorial display type ---- */
+@utility headline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+@utility eyebrow {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+/* ---- Surfaces ---- */
+@utility panel {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+@utility hero-veil {
+  background:
+    linear-gradient(180deg, oklch(0.13 0.012 260 / 92%) 0%, oklch(0.13 0.012 260 / 55%) 30%, oklch(0.13 0.012 260 / 88%) 78%, oklch(0.135 0.012 260) 100%);
+}
+
+@utility red-accent-bar {
+  border-left: 3px solid var(--racing-red);
+}
+
+/* ---- Timing table ---- */
+@utility timing-cell {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+@utility row-selected {
+  background-color: color-mix(in oklab, var(--racing-red) 14%, var(--card));
+}
+
+/* ---- Team colour chip ---- */
+@utility team-chip {
+  width: 3px;
+  min-width: 3px;
+  border-radius: 1px;
+  align-self: stretch;
+}
+
+/* ---- Scrollbar ---- */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--background);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.3 0.012 260);
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.38 0.012 260);
+  }
+}

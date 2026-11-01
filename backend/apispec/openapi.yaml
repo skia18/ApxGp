@@ -1,0 +1,492 @@
+openapi: 3.1.0
+info:
+  title: Apex F1 API
+  version: 0.1.0
+  description: Canonical API for Apex F1. Provider-specific payloads are never exposed directly.
+servers:
+  - url: http://localhost:8081
+    description: Local development
+paths:
+  /health/live:
+    get:
+      operationId: getLiveness
+      summary: Confirm that the API process is running
+      responses:
+        "200":
+          description: API process is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /health/ready:
+    get:
+      operationId: getReadiness
+      summary: Confirm that required dependencies are available
+      responses:
+        "200":
+          description: API is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /api/v1/seasons/current:
+    get:
+      operationId: getCurrentSeason
+      summary: Get the current or latest available season
+      responses:
+        "200":
+          description: Current season
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Season"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/seasons/{year}/races:
+    get:
+      operationId: listSeasonRaces
+      summary: List races for a season
+      parameters:
+        - $ref: "#/components/parameters/SeasonYear"
+      responses:
+        "200":
+          description: Season race calendar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RacePage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/races/next:
+    get:
+      operationId: getNextRace
+      summary: Get the next race after the current time
+      responses:
+        "200":
+          description: Next race
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Race"
+                  freshness:
+                    $ref: "#/components/schemas/Freshness"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/races/{raceId}/sessions:
+    get:
+      operationId: listRaceSessions
+      summary: List imported sessions for a race
+      parameters:
+        - name: raceId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Race sessions
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionListResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/v1/sessions/{sessionId}/classification:
+    get:
+      operationId: getSessionClassification
+      summary: Get race or qualifying classification
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Session classification
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClassificationResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/v1/drivers:
+    get:
+      operationId: listDrivers
+      summary: List known drivers
+      responses:
+        "200":
+          description: Drivers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverListResponse"
+  /api/v1/drivers/{driverId}:
+    get:
+      operationId: getDriver
+      summary: Get a driver
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Driver
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Driver" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/v1/teams:
+    get:
+      operationId: listTeams
+      summary: List known constructors
+      responses:
+        "200":
+          description: Constructors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConstructorListResponse"
+  /api/v1/teams/{teamId}:
+    get:
+      operationId: getTeam
+      summary: Get a constructor
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Constructor
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/Constructor" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/v1/seasons/{year}/driver-standings:
+    get:
+      operationId: getDriverStandings
+      summary: Get driver championship standings
+      parameters:
+        - $ref: "#/components/parameters/SeasonYear"
+      responses:
+        "200":
+          description: Driver standings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverStandingsResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+  /api/v1/seasons/{year}/constructor-standings:
+    get:
+      operationId: getConstructorStandings
+      summary: Get constructor championship standings
+      parameters:
+        - $ref: "#/components/parameters/SeasonYear"
+      responses:
+        "200":
+          description: Constructor standings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConstructorStandingsResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+components:
+  parameters:
+    SeasonYear:
+      name: year
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1950
+        maximum: 2200
+      example: 2026
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalError:
+      description: Internal API error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ServiceUnavailable:
+      description: A required dependency is unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: "#/components/schemas/APIError"
+    APIError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: not_found
+        message:
+          type: string
+        requestId:
+          type: string
+    Season:
+      type: object
+      required: [id, year, isCurrent, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        year:
+          type: integer
+        isCurrent:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+    Circuit:
+      type: object
+      required: [id, slug, name, locality, country]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        locality:
+          type: string
+        country:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+    Race:
+      type: object
+      required: [id, season, round, slug, name, startsAt, circuit, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        season:
+          type: integer
+        round:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        circuit:
+          $ref: "#/components/schemas/Circuit"
+        updatedAt:
+          type: string
+          format: date-time
+    Freshness:
+      type: object
+      required: [source, retrievedAt, stale]
+      properties:
+        source:
+          type: string
+        retrievedAt:
+          type: string
+          format: date-time
+        stale:
+          type: boolean
+    RacePage:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Race"
+        total:
+          type: integer
+          minimum: 0
+        freshness:
+          $ref: "#/components/schemas/Freshness"
+    Driver:
+      type: object
+      required: [id, slug, givenName, familyName, nationality]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        givenName: { type: string }
+        familyName: { type: string }
+        code: { type: string }
+        permanentNumber: { type: integer }
+        dateOfBirth: { type: string, format: date-time }
+        nationality: { type: string }
+    Constructor:
+      type: object
+      required: [id, slug, name, nationality]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        nationality: { type: string }
+    DriverStanding:
+      type: object
+      required: [position, points, wins, driver]
+      properties:
+        position: { type: integer }
+        points: { type: number }
+        wins: { type: integer }
+        driver: { $ref: "#/components/schemas/Driver" }
+        constructor: { $ref: "#/components/schemas/Constructor" }
+    ConstructorStanding:
+      type: object
+      required: [position, points, wins, constructor]
+      properties:
+        position: { type: integer }
+        points: { type: number }
+        wins: { type: integer }
+        constructor: { $ref: "#/components/schemas/Constructor" }
+    DriverListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [items, total]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/Driver" } }
+            total: { type: integer }
+    ConstructorListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [items, total]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/Constructor" } }
+            total: { type: integer }
+    DriverStandingsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [items, total]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/DriverStanding" } }
+            total: { type: integer }
+            freshness: { $ref: "#/components/schemas/Freshness" }
+    ConstructorStandingsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [items, total]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/ConstructorStanding" } }
+            total: { type: integer }
+            freshness: { $ref: "#/components/schemas/Freshness" }
+    Session:
+      type: object
+      required: [id, raceId, type, name]
+      properties:
+        id: { type: string, format: uuid }
+        raceId: { type: string, format: uuid }
+        type: { type: string, enum: [practice, qualifying, sprint_qualifying, sprint, race] }
+        name: { type: string }
+        startsAt: { type: string, format: date-time }
+    RaceClassification:
+      type: object
+      required: [position, positionText, points, grid, laps, status, driver, constructor]
+      properties:
+        position: { type: integer }
+        positionText: { type: string }
+        points: { type: number }
+        grid: { type: integer }
+        laps: { type: integer }
+        status: { type: string }
+        elapsedMillis: { type: integer, format: int64 }
+        fastestLapRank: { type: integer }
+        fastestLap: { type: string }
+        driver: { $ref: "#/components/schemas/Driver" }
+        constructor: { $ref: "#/components/schemas/Constructor" }
+    QualifyingClassification:
+      type: object
+      required: [position, driver, constructor]
+      properties:
+        position: { type: integer }
+        q1: { type: string }
+        q2: { type: string }
+        q3: { type: string }
+        driver: { $ref: "#/components/schemas/Driver" }
+        constructor: { $ref: "#/components/schemas/Constructor" }
+    SessionListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [items, total]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/Session" } }
+            total: { type: integer }
+    ClassificationResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [session]
+          properties:
+            session: { $ref: "#/components/schemas/Session" }
+            race: { type: array, items: { $ref: "#/components/schemas/RaceClassification" } }
+            qualifying: { type: array, items: { $ref: "#/components/schemas/QualifyingClassification" } }
+            freshness: { $ref: "#/components/schemas/Freshness" }

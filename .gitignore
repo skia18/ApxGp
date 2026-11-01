@@ -1,0 +1,21 @@
+node_modules/
+.output/
+.vercel/
+dist/
+.vinxi/
+
+.env
+.env.*
+!.env.example
+
+# Local credentials and signing material
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+credentials.json
+service-account*.json
+
+*.log
+.DS_Store

@@ -1,0 +1,2 @@
+-- Deterministic development seed data can be added here when needed.
+-- Provider-owned F1 data is loaded through the Go ingestion command instead.
