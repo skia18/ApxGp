@@ -12,7 +12,8 @@ export function ConstructorIdentity({
   link?: boolean;
 }) {
   const c = constructorById(teamId);
-  if (!c) return <span className="text-sm text-muted-foreground">Unknown team</span>;
+  if (!c)
+    return <span className="text-sm text-muted-foreground">Unknown team</span>;
   const inner = (
     <span className="inline-flex items-center gap-2">
       <span
@@ -20,7 +21,11 @@ export function ConstructorIdentity({
         style={{ backgroundColor: c.color }}
         aria-hidden
       />
-      <span className={size === "sm" ? "text-xs font-semibold" : "text-sm font-semibold"}>
+      <span
+        className={
+          size === "sm" ? "text-xs font-semibold" : "text-sm font-semibold"
+        }
+      >
         {c.name}
       </span>
     </span>
@@ -49,10 +54,17 @@ export function DriverIdentity({
   link?: boolean;
 }) {
   const dr = driverById(driverId);
-  if (!dr) return <span className="text-sm text-muted-foreground">Unknown driver</span>;
+  if (!dr)
+    return (
+      <span className="text-sm text-muted-foreground">Unknown driver</span>
+    );
   const team = constructorById(dr.teamId);
   const textClass =
-    size === "lg" ? "text-xl font-bold" : size === "md" ? "text-sm font-semibold" : "text-xs font-semibold";
+    size === "lg"
+      ? "text-xl font-bold"
+      : size === "md"
+        ? "text-sm font-semibold"
+        : "text-xs font-semibold";
   const inner = (
     <span className="inline-flex items-center gap-2.5">
       {team && (
@@ -65,7 +77,9 @@ export function DriverIdentity({
       <span className={textClass}>
         {nationalityFlag(dr.countryCode)} {dr.name}
         {showNumber && (
-          <span className="ml-1.5 tabular text-muted-foreground text-xs">#{dr.number}</span>
+          <span className="ml-1.5 tabular text-muted-foreground text-xs">
+            #{dr.number}
+          </span>
         )}
       </span>
     </span>

@@ -8,10 +8,12 @@ export function SiteFooter() {
         <div>
           <BrandMark />
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-            A premium digital home for Formula 1 — race centre, grid, garage, learning and history.
+            A premium digital home for Formula 1 — race centre, grid, garage,
+            learning and history.
           </p>
           <p className="mt-6 text-xs text-muted-foreground/70">
-            Sample data shown throughout pending a live data integration. Unaffiliated with Formula 1 or its teams.
+            Sample data shown throughout pending a live data integration.
+            Unaffiliated with Formula 1 or its teams.
           </p>
         </div>
         <FooterCol
@@ -43,14 +45,23 @@ export function SiteFooter() {
   );
 }
 
-function FooterCol({ title, links }: { title: string; links: { label: string; to: string }[] }) {
+function FooterCol({
+  title,
+  links,
+}: {
+  title: string;
+  links: { label: string; to: string }[];
+}) {
   return (
     <div>
       <h3 className="eyebrow text-muted-foreground">{title}</h3>
       <ul className="mt-4 space-y-2.5">
         {links.map((l) => (
           <li key={l.label}>
-            <Link to={l.to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              to={l.to}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
               {l.label}
             </Link>
           </li>

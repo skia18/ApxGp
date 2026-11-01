@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { RaceStatusBadge, SampleDataBadge } from "@/components/f1/RaceStatusBadge";
+import {
+  RaceStatusBadge,
+  SampleDataBadge,
+} from "@/components/f1/RaceStatusBadge";
 import { TimingTable } from "@/components/f1/TimingTable";
 import { CircuitMap } from "@/components/f1/CircuitMap";
 import {
@@ -13,11 +16,7 @@ import {
 import { PageTitle } from "@/components/f1/SectionHeading";
 import { DriverIdentity } from "@/components/f1/Identity";
 import { Countdown } from "@/components/f1/Countdown";
-import {
-  sampleTimingRows,
-  sampleStrategy,
-  sampleSession,
-} from "@/data/timing";
+import { sampleTimingRows, sampleStrategy, sampleSession } from "@/data/timing";
 import { circuitById } from "@/data/circuits";
 import { driverById, drivers } from "@/data/drivers";
 import type { SessionState } from "@/data/types";
@@ -32,7 +31,8 @@ import {
 
 export const Route = createFileRoute("/race-centre")({
   loader: async ({ context }) => {
-    const currentSeason = await context.queryClient.ensureQueryData(currentSeasonQuery());
+    const currentSeason =
+      await context.queryClient.ensureQueryData(currentSeasonQuery());
     const race = await context.queryClient.ensureQueryData(nextRaceQuery());
     await Promise.all([
       context.queryClient.ensureQueryData(seasonRacesQuery(currentSeason.year)),
@@ -42,9 +42,17 @@ export const Route = createFileRoute("/race-centre")({
   head: () => ({
     meta: [
       { title: "Race Centre — Apex F1" },
-      { name: "description", content: "Upcoming Grand Prix, session schedule, sample live timing leaderboard, circuit visualisation and strategy analysis." },
+      {
+        name: "description",
+        content:
+          "Upcoming Grand Prix, session schedule, sample live timing leaderboard, circuit visualisation and strategy analysis.",
+      },
       { property: "og:title", content: "Race Centre — Apex F1" },
-      { property: "og:description", content: "Schedule, timing, circuit and strategy for the next Grand Prix." },
+      {
+        property: "og:description",
+        content:
+          "Schedule, timing, circuit and strategy for the next Grand Prix.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -66,12 +74,16 @@ const VIEW_LABELS: Record<View, string> = {
 function RaceCentre() {
   const { data: currentSeason } = useSuspenseQuery(currentSeasonQuery());
   const { data: nextRace } = useSuspenseQuery(nextRaceQuery());
-  const { data: calendar } = useSuspenseQuery(seasonRacesQuery(currentSeason.year));
+  const { data: calendar } = useSuspenseQuery(
+    seasonRacesQuery(currentSeason.year),
+  );
   const [selectedRaceId, setSelectedRaceId] = useState(nextRace.id);
   const race = calendar.find((item) => item.id === selectedRaceId) ?? nextRace;
   const sessionsQuery = useQuery(raceSessionsQuery(race.id));
   const sessions = sessionsQuery.data ?? [];
-  const resultSessions = sessions.filter((session) => session.type !== "practice");
+  const resultSessions = sessions.filter(
+    (session) => session.type !== "practice",
+  );
   const [selectedSessionId, setSelectedSessionId] = useState<string>();
   const selectedSession =
     resultSessions.find((session) => session.id === selectedSessionId) ??
@@ -93,8 +105,12 @@ function RaceCentre() {
 
   const selected = driverById(selectedDriver);
   const selectedStrategy = strategy.find((s) => s.driverId === selectedDriver);
-  const teamMate = selected ? drivers.find((d) => d.teamId === selected.teamId && d.id !== selected.id) : undefined;
-  const teamMateStrategy = teamMate ? strategy.find((s) => s.driverId === teamMate.id) : undefined;
+  const teamMate = selected
+    ? drivers.find((d) => d.teamId === selected.teamId && d.id !== selected.id)
+    : undefined;
+  const teamMateStrategy = teamMate
+    ? strategy.find((s) => s.driverId === teamMate.id)
+    : undefined;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -137,7 +153,10 @@ function RaceCentre() {
       </div>
 
       <div className="panel mt-6 flex flex-wrap items-center gap-3 p-4">
-        <label htmlFor="race-selector" className="eyebrow text-[10px] text-muted-foreground">
+        <label
+          htmlFor="race-selector"
+          className="eyebrow text-[10px] text-muted-foreground"
+        >
           Grand Prix
         </label>
         <select
@@ -165,7 +184,10 @@ function RaceCentre() {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <nav className="flex gap-1 overflow-x-auto border-b border-border" aria-label="Race Centre views">
+        <nav
+          className="flex gap-1 overflow-x-auto border-b border-border"
+          aria-label="Race Centre views"
+        >
           {VIEWS.map((v) => (
             <button
               key={v}
@@ -183,18 +205,22 @@ function RaceCentre() {
         {view !== "overview" && view !== "results" && (
           <div className="flex items-center gap-3">
             <SampleDataBadge />
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            Preview state
-            <select
-              value={sessionState}
-              onChange={(e) => setSessionState(e.target.value as SessionState)}
-              className="rounded-sm border border-border bg-secondary px-2 py-1 text-xs text-foreground"
-            >
-              {sampleSession.states.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              Preview state
+              <select
+                value={sessionState}
+                onChange={(e) =>
+                  setSessionState(e.target.value as SessionState)
+                }
+                className="rounded-sm border border-border bg-secondary px-2 py-1 text-xs text-foreground"
+              >
+                {sampleSession.states.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         )}
       </div>
@@ -203,7 +229,8 @@ function RaceCentre() {
         <div className="panel mt-8 flex flex-col items-center justify-center p-16 text-center">
           <p className="headline text-xl">Feed unavailable</p>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            No timing feed is connected for this session yet. Views are shown with clearly labelled sample data once a feed is integrated.
+            No timing feed is connected for this session yet. Views are shown
+            with clearly labelled sample data once a feed is integrated.
           </p>
         </div>
       ) : view === "timing" && sessionState === "delayed" ? (
@@ -228,7 +255,9 @@ function RaceCentre() {
           sessionsPending={sessionsQuery.isPending}
           sessionsError={sessionsQuery.error}
           classification={classification.data}
-          classificationPending={classification.isPending && Boolean(selectedSession)}
+          classificationPending={
+            classification.isPending && Boolean(selectedSession)
+          }
           classificationError={classification.error}
         />
       )}
@@ -238,7 +267,8 @@ function RaceCentre() {
             <div className="panel p-10 text-center">
               <p className="headline text-xl">Session not started</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                The leaderboard appears here when the session goes live. Preview with the sample dataset below.
+                The leaderboard appears here when the session goes live. Preview
+                with the sample dataset below.
               </p>
             </div>
           )}
@@ -246,7 +276,8 @@ function RaceCentre() {
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
               <p className="headline text-sm">Timing tower</p>
               <p className="text-xs text-muted-foreground">
-                Sample dataset · click a row to follow that driver across timing, circuit and strategy
+                Sample dataset · click a row to follow that driver across
+                timing, circuit and strategy
               </p>
             </div>
             <TimingTable
@@ -261,7 +292,9 @@ function RaceCentre() {
                 Following <DriverIdentity driverId={selected.id} showNumber />
               </p>
               <p className="tabular text-xs text-muted-foreground">
-                {selectedStrategy ? `${selectedStrategy.stints.length} stints · last pit lap ${selectedStrategy.pitLaps.join(", ")}` : ""}
+                {selectedStrategy
+                  ? `${selectedStrategy.stints.length} stints · last pit lap ${selectedStrategy.pitLaps.join(", ")}`
+                  : ""}
               </p>
             </div>
           )}
@@ -276,7 +309,9 @@ function RaceCentre() {
             </div>
             <CircuitMap circuit={circuit} className="mx-auto mt-4 max-w-lg" />
             <p className="mt-4 text-center text-xs text-muted-foreground">
-              Stylised outline with sector thirds and turn markers. Driver position markers appear when positional telemetry is integrated — none are fabricated.
+              Stylised outline with sector thirds and turn markers. Driver
+              position markers appear when positional telemetry is integrated —
+              none are fabricated.
             </p>
           </div>
           <div className="space-y-4">
@@ -285,7 +320,10 @@ function RaceCentre() {
               <dl className="mt-4 space-y-3 text-sm">
                 <Fact label="Length" value={`${circuit.lengthKm} km`} />
                 <Fact label="Turns" value={String(circuit.turns)} />
-                <Fact label="First Grand Prix" value={String(circuit.firstGrandPrix)} />
+                <Fact
+                  label="First Grand Prix"
+                  value={String(circuit.firstGrandPrix)}
+                />
                 <Fact label="Lap record" value={circuit.lapRecord} />
               </dl>
             </div>
@@ -296,7 +334,8 @@ function RaceCentre() {
                   <DriverIdentity driverId={selected.id} size="lg" showNumber />
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Position markers will highlight this driver once live telemetry is connected.
+                  Position markers will highlight this driver once live
+                  telemetry is connected.
                 </p>
               </div>
             )}
@@ -347,32 +386,37 @@ function RaceCentre() {
         <h2 className="headline text-xl">{currentSeason.year} calendar</h2>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {calendar.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => {
-                  setSelectedRaceId(r.id);
-                  setSelectedSessionId(undefined);
-                  setView("results");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className={`panel flex items-center justify-between p-4 text-left transition-colors hover:border-muted-foreground/50 ${
-                  r.id === race.id ? "border-primary" : ""
-                }`}
-              >
-                <div>
-                  <p className="tabular text-[10px] text-muted-foreground">R{r.round}</p>
-                  <p className="mt-1 text-sm font-semibold">{r.name}</p>
-                  <p className="tabular mt-1 text-xs text-muted-foreground">
-                    {new Date(r.startsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                  </p>
-                </div>
-                <RaceStatusBadge
-                  state={getEventState(r)}
-                  pulse={getEventState(r) === "live"}
-                />
-              </button>
-            ))}
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => {
+                setSelectedRaceId(r.id);
+                setSelectedSessionId(undefined);
+                setView("results");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className={`panel flex items-center justify-between p-4 text-left transition-colors hover:border-muted-foreground/50 ${
+                r.id === race.id ? "border-primary" : ""
+              }`}
+            >
+              <div>
+                <p className="tabular text-[10px] text-muted-foreground">
+                  R{r.round}
+                </p>
+                <p className="mt-1 text-sm font-semibold">{r.name}</p>
+                <p className="tabular mt-1 text-xs text-muted-foreground">
+                  {new Date(r.startsAt).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </p>
+              </div>
+              <RaceStatusBadge
+                state={getEventState(r)}
+                pulse={getEventState(r) === "live"}
+              />
+            </button>
+          ))}
         </div>
       </section>
     </div>
@@ -397,13 +441,18 @@ function Overview({
         <h3 className="headline text-sm">Weekend schedule</h3>
         <div className="mt-4 divide-y divide-border">
           {sessionsPending && (
-            <p className="py-5 text-sm text-muted-foreground">Loading session schedule…</p>
+            <p className="py-5 text-sm text-muted-foreground">
+              Loading session schedule…
+            </p>
           )}
           {sessionsError && (
             <p className="py-5 text-sm text-primary">{sessionsError.message}</p>
           )}
           {sessions.map((session) => (
-            <div key={session.id} className="flex items-center justify-between py-3">
+            <div
+              key={session.id}
+              className="flex items-center justify-between py-3"
+            >
               <div className="flex items-center gap-3">
                 <RaceStatusBadge
                   state={getSessionState(session, race)}
@@ -413,7 +462,13 @@ function Overview({
               </div>
               <span className="tabular text-xs text-muted-foreground">
                 {session.startsAt
-                  ? new Date(session.startsAt).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+                  ? new Date(session.startsAt).toLocaleString("en-GB", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
                   : "TBC"}
               </span>
             </div>
@@ -437,7 +492,10 @@ function Overview({
               Circuit illustration coming soon.
             </p>
           )}
-          <Link to="/race-centre" className="mt-3 inline-block text-xs font-semibold text-primary">
+          <Link
+            to="/race-centre"
+            className="mt-3 inline-block text-xs font-semibold text-primary"
+          >
             Circuit view →
           </Link>
         </div>
@@ -466,11 +524,22 @@ function ResultsView({
   classificationError: Error | null;
 }) {
   if (sessionsPending) {
-    return <StatusPanel title="Loading results" message="Fetching the available sessions…" />;
+    return (
+      <StatusPanel
+        title="Loading results"
+        message="Fetching the available sessions…"
+      />
+    );
   }
 
   if (sessionsError) {
-    return <StatusPanel title="Results unavailable" message={sessionsError.message} tone="error" />;
+    return (
+      <StatusPanel
+        title="Results unavailable"
+        message={sessionsError.message}
+        tone="error"
+      />
+    );
   }
 
   if (!selectedSession) {
@@ -485,7 +554,10 @@ function ResultsView({
   return (
     <section className="mt-6 space-y-4">
       <div className="panel flex flex-wrap items-center gap-3 p-4">
-        <label htmlFor="session-selector" className="eyebrow text-[10px] text-muted-foreground">
+        <label
+          htmlFor="session-selector"
+          className="eyebrow text-[10px] text-muted-foreground"
+        >
           Session
         </label>
         <select
@@ -500,11 +572,16 @@ function ResultsView({
             </option>
           ))}
         </select>
-        <span className="text-xs text-muted-foreground">Official imported classification</span>
+        <span className="text-xs text-muted-foreground">
+          Official imported classification
+        </span>
       </div>
 
       {classificationPending && (
-        <StatusPanel title="Loading classification" message="Fetching official results…" />
+        <StatusPanel
+          title="Loading classification"
+          message="Fetching official results…"
+        />
       )}
       {classificationError && (
         <StatusPanel
@@ -513,12 +590,18 @@ function ResultsView({
           tone="error"
         />
       )}
-      {classification && <ClassificationTable classification={classification} />}
+      {classification && (
+        <ClassificationTable classification={classification} />
+      )}
     </section>
   );
 }
 
-function ClassificationTable({ classification }: { classification: Classification }) {
+function ClassificationTable({
+  classification,
+}: {
+  classification: Classification;
+}) {
   const raceRows = classification.race ?? [];
   const qualifyingRows = classification.qualifying ?? [];
 
@@ -563,24 +646,52 @@ function ClassificationTable({ classification }: { classification: Classificatio
         </thead>
         <tbody>
           {raceRows.map((row) => (
-            <tr key={row.driver.id} className="border-b border-border/50 last:border-0">
-              <td className="px-4 py-3 tabular text-sm font-bold">{row.positionText}</td>
-              <DriverCells driver={row.driver} constructorName={row.constructor.name} />
+            <tr
+              key={row.driver.id}
+              className="border-b border-border/50 last:border-0"
+            >
+              <td className="px-4 py-3 tabular text-sm font-bold">
+                {row.positionText}
+              </td>
+              <DriverCells
+                driver={row.driver}
+                constructorName={row.constructor.name}
+              />
               <td className="px-4 py-3 text-right tabular text-sm text-muted-foreground">
                 {row.grid || "Pit"}
               </td>
-              <td className="px-4 py-3 text-right tabular text-sm">{row.laps}</td>
-              <td className="px-4 py-3 text-xs text-muted-foreground">{row.status}</td>
-              <td className="px-4 py-3 text-right tabular text-sm font-semibold">{row.points}</td>
+              <td className="px-4 py-3 text-right tabular text-sm">
+                {row.laps}
+              </td>
+              <td className="px-4 py-3 text-xs text-muted-foreground">
+                {row.status}
+              </td>
+              <td className="px-4 py-3 text-right tabular text-sm font-semibold">
+                {row.points}
+              </td>
             </tr>
           ))}
           {qualifyingRows.map((row) => (
-            <tr key={row.driver.id} className="border-b border-border/50 last:border-0">
-              <td className="px-4 py-3 tabular text-sm font-bold">{row.position}</td>
-              <DriverCells driver={row.driver} constructorName={row.constructor.name} />
-              <td className="px-4 py-3 text-right tabular text-sm">{row.q1 ?? "—"}</td>
-              <td className="px-4 py-3 text-right tabular text-sm">{row.q2 ?? "—"}</td>
-              <td className="px-4 py-3 text-right tabular text-sm">{row.q3 ?? "—"}</td>
+            <tr
+              key={row.driver.id}
+              className="border-b border-border/50 last:border-0"
+            >
+              <td className="px-4 py-3 tabular text-sm font-bold">
+                {row.position}
+              </td>
+              <DriverCells
+                driver={row.driver}
+                constructorName={row.constructor.name}
+              />
+              <td className="px-4 py-3 text-right tabular text-sm">
+                {row.q1 ?? "—"}
+              </td>
+              <td className="px-4 py-3 text-right tabular text-sm">
+                {row.q2 ?? "—"}
+              </td>
+              <td className="px-4 py-3 text-right tabular text-sm">
+                {row.q3 ?? "—"}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -603,10 +714,14 @@ function DriverCells({
           {driver.givenName} {driver.familyName}
         </span>
         {driver.code && (
-          <span className="ml-2 text-xs text-muted-foreground">{driver.code}</span>
+          <span className="ml-2 text-xs text-muted-foreground">
+            {driver.code}
+          </span>
         )}
       </td>
-      <td className="px-4 py-3 text-xs text-muted-foreground">{constructorName}</td>
+      <td className="px-4 py-3 text-xs text-muted-foreground">
+        {constructorName}
+      </td>
     </>
   );
 }
@@ -622,7 +737,11 @@ function StatusPanel({
 }) {
   return (
     <div className="panel mt-6 p-10 text-center">
-      <p className={`headline text-lg ${tone === "error" ? "text-primary" : ""}`}>{title}</p>
+      <p
+        className={`headline text-lg ${tone === "error" ? "text-primary" : ""}`}
+      >
+        {title}
+      </p>
       <p className="mt-2 text-sm text-muted-foreground">{message}</p>
     </div>
   );

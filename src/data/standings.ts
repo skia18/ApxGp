@@ -1,7 +1,4 @@
-import type {
-  DriverStanding,
-  ConstructorStanding,
-} from "./types";
+import type { DriverStanding, ConstructorStanding } from "./types";
 
 // SAMPLE DATA — 2026 standings illustration pending a real data integration.
 export const driverStandings: DriverStanding[] = [

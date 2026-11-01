@@ -4,12 +4,18 @@ import type { TimingRow } from "@/data/types";
 
 function compoundColor(c: string | null): string {
   switch (c) {
-    case "S": return "#FF4554";
-    case "M": return "#FFD12E";
-    case "H": return "#EBEBEB";
-    case "I": return "#43CD4A";
-    case "W": return "#3B7FDB";
-    default: return "transparent";
+    case "S":
+      return "#FF4554";
+    case "M":
+      return "#FFD12E";
+    case "H":
+      return "#EBEBEB";
+    case "I":
+      return "#43CD4A";
+    case "W":
+      return "#3B7FDB";
+    default:
+      return "transparent";
   }
 }
 
@@ -30,13 +36,17 @@ export function TimingTable({
             <th className="py-2.5 pl-3 pr-2 font-semibold">Pos</th>
             <th className="py-2.5 px-2 font-semibold">No.</th>
             <th className="py-2.5 px-2 font-semibold">Driver</th>
-            <th className="py-2.5 px-2 font-semibold hidden md:table-cell">Constructor</th>
+            <th className="py-2.5 px-2 font-semibold hidden md:table-cell">
+              Constructor
+            </th>
             <th className="py-2.5 px-2 text-right font-semibold">Lap</th>
             <th className="py-2.5 px-2 text-right font-semibold">Gap</th>
             <th className="py-2.5 px-2 text-right font-semibold">Interval</th>
             <th className="py-2.5 px-2 text-right font-semibold">Last</th>
             <th className="py-2.5 px-2 text-right font-semibold">Best</th>
-            <th className="py-2.5 px-2 text-center font-semibold hidden lg:table-cell">S1 / S2 / S3</th>
+            <th className="py-2.5 px-2 text-center font-semibold hidden lg:table-cell">
+              S1 / S2 / S3
+            </th>
             <th className="py-2.5 px-2 text-center font-semibold">Tyre</th>
             <th className="py-2.5 pr-3 px-2 text-center font-semibold">Pits</th>
           </tr>
@@ -57,29 +67,50 @@ export function TimingTable({
               >
                 <td className="py-2.5 pl-3 pr-2">
                   <div className="flex items-center gap-2">
-                    <span className="h-4 w-1 rounded-full" style={{ backgroundColor: team?.color }} />
-                    <span className={`timing-cell font-semibold ${r.retired ? "text-muted-foreground/50" : ""}`}>
+                    <span
+                      className="h-4 w-1 rounded-full"
+                      style={{ backgroundColor: team?.color }}
+                    />
+                    <span
+                      className={`timing-cell font-semibold ${r.retired ? "text-muted-foreground/50" : ""}`}
+                    >
                       {r.retired ? "DNF" : r.position}
                     </span>
                   </div>
                 </td>
-                <td className="timing-cell px-2 text-muted-foreground">{dr.number}</td>
+                <td className="timing-cell px-2 text-muted-foreground">
+                  {dr.number}
+                </td>
                 <td className="px-2">
-                  <span className={`text-[13px] font-semibold ${r.retired ? "text-muted-foreground/60" : ""}`}>
+                  <span
+                    className={`text-[13px] font-semibold ${r.retired ? "text-muted-foreground/60" : ""}`}
+                  >
                     {dr.abbreviation}
-                    <span className="ml-2 hidden font-normal text-muted-foreground md:inline">{dr.name}</span>
+                    <span className="ml-2 hidden font-normal text-muted-foreground md:inline">
+                      {dr.name}
+                    </span>
                   </span>
                 </td>
                 <td className="px-2 hidden md:table-cell">
-                  <span className="text-[13px] text-muted-foreground">{team?.name}</span>
+                  <span className="text-[13px] text-muted-foreground">
+                    {team?.name}
+                  </span>
                 </td>
                 <td className="timing-cell px-2 text-right text-muted-foreground">
                   {r.retired || r.lapNumber === null ? "—" : r.lapNumber}
                 </td>
-                <td className="timing-cell px-2 text-right">{r.gapToLeader ?? "—"}</td>
-                <td className="timing-cell px-2 text-right text-muted-foreground">{r.interval ?? "—"}</td>
-                <td className="timing-cell px-2 text-right">{r.lastLap ?? "—"}</td>
-                <td className="timing-cell px-2 text-right text-signal-purple">{r.bestLap ?? "—"}</td>
+                <td className="timing-cell px-2 text-right">
+                  {r.gapToLeader ?? "—"}
+                </td>
+                <td className="timing-cell px-2 text-right text-muted-foreground">
+                  {r.interval ?? "—"}
+                </td>
+                <td className="timing-cell px-2 text-right">
+                  {r.lastLap ?? "—"}
+                </td>
+                <td className="timing-cell px-2 text-right text-signal-purple">
+                  {r.bestLap ?? "—"}
+                </td>
                 <td className="timing-cell px-2 text-center hidden lg:table-cell text-muted-foreground">
                   {r.retired ? "— — —" : r.sectors.join(" / ")}
                 </td>
@@ -87,7 +118,10 @@ export function TimingTable({
                   {r.compound ? (
                     <span
                       className="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 text-[9px] font-bold"
-                      style={{ borderColor: compoundColor(r.compound), color: compoundColor(r.compound) }}
+                      style={{
+                        borderColor: compoundColor(r.compound),
+                        color: compoundColor(r.compound),
+                      }}
                       title={`${r.compound}${r.tyreAge ? ` · age ${r.tyreAge} laps` : ""}`}
                     >
                       {r.compound}
@@ -97,7 +131,11 @@ export function TimingTable({
                   )}
                 </td>
                 <td className="timing-cell pr-3 px-2 text-center text-muted-foreground">
-                  {r.inPit ? <span className="text-signal-amber font-semibold">PIT</span> : r.pitCount}
+                  {r.inPit ? (
+                    <span className="text-signal-amber font-semibold">PIT</span>
+                  ) : (
+                    r.pitCount
+                  )}
                 </td>
               </tr>
             );

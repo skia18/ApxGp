@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
-import { OrbitControls, ContactShadows, Environment, Lightformer } from "@react-three/drei";
+import {
+  OrbitControls,
+  ContactShadows,
+  Environment,
+  Lightformer,
+} from "@react-three/drei";
 import * as THREE from "three";
 import type { Car } from "@/data/types";
 
@@ -26,7 +31,11 @@ function Wheel({ position }: { position: [number, number, number] }) {
       </mesh>
       <mesh rotation-y={Math.PI / 2} position={[0, 0, 0]}>
         <cylinderGeometry args={[0.22, 0.22, 0.44, 16]} />
-        <meshStandardMaterial color="#2a2a2e" metalness={0.6} roughness={0.35} />
+        <meshStandardMaterial
+          color="#2a2a2e"
+          metalness={0.6}
+          roughness={0.35}
+        />
       </mesh>
     </group>
   );
@@ -40,7 +49,13 @@ interface PartProps {
   hovered: ComponentId | null;
 }
 
-function usePartHandlers(id: ComponentId, onSelect: PartProps["onSelect"], onHover: PartProps["onHover"], selected: ComponentId | null, hovered: ComponentId | null) {
+function usePartHandlers(
+  id: ComponentId,
+  onSelect: PartProps["onSelect"],
+  onHover: PartProps["onHover"],
+  selected: ComponentId | null,
+  hovered: ComponentId | null,
+) {
   const isSel = selected === id;
   const isHover = hovered === id;
   const emissive = isSel ? "#e10600" : isHover ? "#5a6070" : "#000000";
@@ -58,21 +73,45 @@ function usePartHandlers(id: ComponentId, onSelect: PartProps["onSelect"], onHov
 }
 
 function FrontWing({ color, ...sel }: PartProps) {
-  const h = usePartHandlers("front-wing", sel.onSelect, sel.onHover, sel.selected, sel.hovered);
+  const h = usePartHandlers(
+    "front-wing",
+    sel.onSelect,
+    sel.onHover,
+    sel.selected,
+    sel.hovered,
+  );
   return (
     <group position={[-2.45, 0.22, 0]} name="Front Wing">
       <mesh castShadow {...h}>
         <boxGeometry args={[0.55, 0.05, 2.0]} />
-        <meshStandardMaterial color={color} metalness={0.35} roughness={0.35} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color={color}
+          metalness={0.35}
+          roughness={0.35}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       <mesh position={[-0.1, -0.08, 0]} {...h}>
         <boxGeometry args={[0.5, 0.04, 1.9]} />
-        <meshStandardMaterial color="#202024" metalness={0.4} roughness={0.4} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color="#202024"
+          metalness={0.4}
+          roughness={0.4}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       {[1.02, -1.02].map((z) => (
         <mesh key={z} position={[0, 0.02, z]} castShadow {...h}>
           <boxGeometry args={[0.62, 0.3, 0.05]} />
-          <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+          <meshStandardMaterial
+            color={color}
+            metalness={0.3}
+            roughness={0.4}
+            emissive={h.emissive}
+            emissiveIntensity={h.emissiveIntensity}
+          />
         </mesh>
       ))}
     </group>
@@ -80,27 +119,62 @@ function FrontWing({ color, ...sel }: PartProps) {
 }
 
 function Nose({ color, ...sel }: PartProps) {
-  const h = usePartHandlers("nose", sel.onSelect, sel.onHover, sel.selected, sel.hovered);
+  const h = usePartHandlers(
+    "nose",
+    sel.onSelect,
+    sel.onHover,
+    sel.selected,
+    sel.hovered,
+  );
   return (
     <group name="Nose & Chassis">
       {/* nose cone */}
       <mesh position={[-1.7, 0.42, 0]} rotation-z={0.08} castShadow {...h}>
         <boxGeometry args={[1.5, 0.22, 0.4]} />
-        <meshStandardMaterial color={color} metalness={0.45} roughness={0.3} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color={color}
+          metalness={0.45}
+          roughness={0.3}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       {/* monocoque */}
       <mesh position={[0, 0.5, 0]} castShadow {...h}>
         <boxGeometry args={[2.4, 0.5, 0.75]} />
-        <meshStandardMaterial color={color} metalness={0.45} roughness={0.3} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color={color}
+          metalness={0.45}
+          roughness={0.3}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       {/* cockpit halo */}
-      <mesh position={[0.45, 0.88, 0]} rotation-x={Math.PI / 2} castShadow {...h}>
+      <mesh
+        position={[0.45, 0.88, 0]}
+        rotation-x={Math.PI / 2}
+        castShadow
+        {...h}
+      >
         <torusGeometry args={[0.32, 0.045, 10, 24, Math.PI]} />
-        <meshStandardMaterial color="#16161a" metalness={0.7} roughness={0.25} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color="#16161a"
+          metalness={0.7}
+          roughness={0.25}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       <mesh position={[0.32, 0.72, 0]} castShadow {...h}>
         <cylinderGeometry args={[0.045, 0.045, 0.55, 8]} />
-        <meshStandardMaterial color="#16161a" metalness={0.7} roughness={0.25} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color="#16161a"
+          metalness={0.7}
+          roughness={0.25}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       {/* driver helmet */}
       <mesh position={[0.55, 0.82, 0]} castShadow>
@@ -112,8 +186,17 @@ function Nose({ color, ...sel }: PartProps) {
 }
 
 function Suspension({ ...sel }: PartProps) {
-  const h = usePartHandlers("suspension", sel.onSelect, sel.onHover, sel.selected, sel.hovered);
-  const arms: { from: [number, number, number]; to: [number, number, number] }[] = [];
+  const h = usePartHandlers(
+    "suspension",
+    sel.onSelect,
+    sel.onHover,
+    sel.selected,
+    sel.hovered,
+  );
+  const arms: {
+    from: [number, number, number];
+    to: [number, number, number];
+  }[] = [];
   for (const side of [0.78, -0.78]) {
     arms.push({ from: [-1.7, 0.45, side * 0.2], to: [-1.98, 0.42, side] });
     arms.push({ from: [-1.5, 0.6, side * 0.2], to: [-1.98, 0.42, side] });
@@ -128,9 +211,23 @@ function Suspension({ ...sel }: PartProps) {
         const mid = from.clone().add(to).multiplyScalar(0.5);
         const len = from.distanceTo(to);
         return (
-          <mesh key={i} position={mid} quaternion={new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize())} {...h}>
+          <mesh
+            key={i}
+            position={mid}
+            quaternion={new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0),
+              to.clone().sub(from).normalize(),
+            )}
+            {...h}
+          >
             <cylinderGeometry args={[0.028, 0.028, len, 6]} />
-            <meshStandardMaterial color="#2e2e34" metalness={0.75} roughness={0.3} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+            <meshStandardMaterial
+              color="#2e2e34"
+              metalness={0.75}
+              roughness={0.3}
+              emissive={h.emissive}
+              emissiveIntensity={h.emissiveIntensity}
+            />
           </mesh>
         );
       })}
@@ -139,35 +236,76 @@ function Suspension({ ...sel }: PartProps) {
 }
 
 function Floor({ color, ...sel }: PartProps) {
-  const h = usePartHandlers("floor", sel.onSelect, sel.onHover, sel.selected, sel.hovered);
+  const h = usePartHandlers(
+    "floor",
+    sel.onSelect,
+    sel.onHover,
+    sel.selected,
+    sel.hovered,
+  );
   return (
     <group name="Floor">
       <mesh position={[0.2, 0.14, 0]} castShadow {...h}>
         <boxGeometry args={[4.2, 0.1, 1.6]} />
-        <meshStandardMaterial color="#1c1c20" metalness={0.3} roughness={0.55} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color="#1c1c20"
+          metalness={0.3}
+          roughness={0.55}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       {/* diffuser ramp */}
       <mesh position={[2.35, 0.2, 0]} rotation-x={-0.35} castShadow {...h}>
         <boxGeometry args={[0.7, 0.08, 1.45]} />
-        <meshStandardMaterial color="#1c1c20" metalness={0.3} roughness={0.55} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color="#1c1c20"
+          metalness={0.3}
+          roughness={0.55}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
     </group>
   );
 }
 
 function Sidepods({ color, ...sel }: PartProps) {
-  const h = usePartHandlers("sidepods", sel.onSelect, sel.onHover, sel.selected, sel.hovered);
+  const h = usePartHandlers(
+    "sidepods",
+    sel.onSelect,
+    sel.onHover,
+    sel.selected,
+    sel.hovered,
+  );
   return (
     <group name="Sidepods">
       {[0.52, -0.52].map((z) => (
         <group key={z}>
           <mesh position={[0.1, 0.42, z]} castShadow {...h}>
             <boxGeometry args={[1.7, 0.34, 0.5]} />
-            <meshStandardMaterial color={color} metalness={0.4} roughness={0.35} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+            <meshStandardMaterial
+              color={color}
+              metalness={0.4}
+              roughness={0.35}
+              emissive={h.emissive}
+              emissiveIntensity={h.emissiveIntensity}
+            />
           </mesh>
-          <mesh position={[-0.62, 0.46, z]} rotation-y={z > 0 ? -0.4 : 0.4} castShadow {...h}>
+          <mesh
+            position={[-0.62, 0.46, z]}
+            rotation-y={z > 0 ? -0.4 : 0.4}
+            castShadow
+            {...h}
+          >
             <boxGeometry args={[0.34, 0.26, 0.42]} />
-            <meshStandardMaterial color="#141416" metalness={0.5} roughness={0.4} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+            <meshStandardMaterial
+              color="#141416"
+              metalness={0.5}
+              roughness={0.4}
+              emissive={h.emissive}
+              emissiveIntensity={h.emissiveIntensity}
+            />
           </mesh>
         </group>
       ))}
@@ -176,17 +314,35 @@ function Sidepods({ color, ...sel }: PartProps) {
 }
 
 function EngineCover({ color, ...sel }: PartProps) {
-  const h = usePartHandlers("engine-cover", sel.onSelect, sel.onHover, sel.selected, sel.hovered);
+  const h = usePartHandlers(
+    "engine-cover",
+    sel.onSelect,
+    sel.onHover,
+    sel.selected,
+    sel.hovered,
+  );
   return (
     <group name="Engine Cover & Halo">
       <mesh position={[0.9, 0.78, 0]} rotation-z={-0.12} castShadow {...h}>
         <boxGeometry args={[1.7, 0.42, 0.42]} />
-        <meshStandardMaterial color={color} metalness={0.4} roughness={0.35} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color={color}
+          metalness={0.4}
+          roughness={0.35}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       {/* roll hoop / airbox */}
       <mesh position={[0.35, 1.02, 0]} castShadow {...h}>
         <boxGeometry args={[0.4, 0.3, 0.3]} />
-        <meshStandardMaterial color={color} metalness={0.4} roughness={0.35} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color={color}
+          metalness={0.4}
+          roughness={0.35}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       <mesh position={[0.35, 1.2, 0]} castShadow>
         <cylinderGeometry args={[0.09, 0.09, 0.12, 12]} />
@@ -197,27 +353,57 @@ function EngineCover({ color, ...sel }: PartProps) {
 }
 
 function RearWing({ color, ...sel }: PartProps) {
-  const h = usePartHandlers("rear-wing", sel.onSelect, sel.onHover, sel.selected, sel.hovered);
+  const h = usePartHandlers(
+    "rear-wing",
+    sel.onSelect,
+    sel.onHover,
+    sel.selected,
+    sel.hovered,
+  );
   return (
     <group position={[2.35, 0.85, 0]} name="Rear Wing">
       <mesh castShadow {...h}>
         <boxGeometry args={[0.42, 0.05, 1.55]} />
-        <meshStandardMaterial color={color} metalness={0.35} roughness={0.35} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color={color}
+          metalness={0.35}
+          roughness={0.35}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       <mesh position={[0.1, -0.12, 0]} rotation-z={-0.2} castShadow {...h}>
         <boxGeometry args={[0.4, 0.04, 1.5]} />
-        <meshStandardMaterial color="#202024" metalness={0.4} roughness={0.4} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color="#202024"
+          metalness={0.4}
+          roughness={0.4}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
       {[0.8, -0.8].map((z) => (
         <mesh key={z} position={[0, -0.05, z]} castShadow {...h}>
           <boxGeometry args={[0.55, 0.42, 0.05]} />
-          <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+          <meshStandardMaterial
+            color={color}
+            metalness={0.3}
+            roughness={0.4}
+            emissive={h.emissive}
+            emissiveIntensity={h.emissiveIntensity}
+          />
         </mesh>
       ))}
       {/* DRS actuator pod */}
       <mesh position={[0.18, 0.06, 0]} {...h}>
         <sphereGeometry args={[0.06, 10, 8]} />
-        <meshStandardMaterial color="#3a3a40" metalness={0.6} roughness={0.3} emissive={h.emissive} emissiveIntensity={h.emissiveIntensity} />
+        <meshStandardMaterial
+          color="#3a3a40"
+          metalness={0.6}
+          roughness={0.3}
+          emissive={h.emissive}
+          emissiveIntensity={h.emissiveIntensity}
+        />
       </mesh>
     </group>
   );
@@ -248,7 +434,13 @@ function CarModel({
     onSelect(id);
   };
 
-  const props: PartProps = { color, onSelect: handleSelect, onHover, selected, hovered };
+  const props: PartProps = {
+    color,
+    onSelect: handleSelect,
+    onHover,
+    selected,
+    hovered,
+  };
 
   return (
     <group ref={group} position={[0, 0.4, 0]}>
@@ -266,7 +458,11 @@ function CarModel({
       {/* rear light */}
       <mesh position={[2.68, 0.5, 0]}>
         <sphereGeometry args={[0.05, 8, 8]} />
-        <meshStandardMaterial color="#ff2222" emissive="#ff2222" emissiveIntensity={1.5} />
+        <meshStandardMaterial
+          color="#ff2222"
+          emissive="#ff2222"
+          emissiveIntensity={1.5}
+        />
       </mesh>
     </group>
   );
@@ -274,7 +470,10 @@ function CarModel({
 
 /* ------------------------------------------------------------------ */
 
-type CameraView = { pos: [number, number, number]; target: [number, number, number] };
+type CameraView = {
+  pos: [number, number, number];
+  target: [number, number, number];
+};
 
 const VIEWS = {
   "three-quarter": { pos: [-4.2, 1.9, 4.2], target: [0, 0.55, 0] },
@@ -313,7 +512,10 @@ function CameraRig({
     const delta = Math.min(rawDelta, 0.05);
     camera.position.lerp(desiredPos.current, 1 - Math.exp(-3 * delta));
     if (controls.current) {
-      controls.current.target.lerp(desiredTarget.current, 1 - Math.exp(-3 * delta));
+      controls.current.target.lerp(
+        desiredTarget.current,
+        1 - Math.exp(-3 * delta),
+      );
       controls.current.update();
     }
   });
@@ -333,8 +535,11 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
   const [viewName, setViewName] = useState<keyof typeof VIEWS>("three-quarter");
   const controls = useRef<any>(null);
 
-  const view = (selected ? componentCameras[selected] : undefined) ?? VIEWS[viewName];
-  const annotation = selected ? car.components.find((c) => c.id === selected) : null;
+  const view =
+    (selected ? componentCameras[selected] : undefined) ?? VIEWS[viewName];
+  const annotation = selected
+    ? car.components.find((c) => c.id === selected)
+    : null;
 
   const reset = () => {
     setSelected(null);
@@ -354,8 +559,23 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
           <color attach="background" args={["#0b0b0e"]} />
           <fog attach="fog" args={["#0b0b0e", 9, 22]} />
           <ambientLight intensity={0.35} color="#3a3d46" />
-          <spotLight position={[0, 8, 2]} angle={0.5} penumbra={0.9} intensity={220} color="#f5f2ea" castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-          <spotLight position={[-6, 4, -3]} angle={0.6} penumbra={1} intensity={60} color="#e10600" />
+          <spotLight
+            position={[0, 8, 2]}
+            angle={0.5}
+            penumbra={0.9}
+            intensity={220}
+            color="#f5f2ea"
+            castShadow
+            shadow-mapSize-width={1024}
+            shadow-mapSize-height={1024}
+          />
+          <spotLight
+            position={[-6, 4, -3]}
+            angle={0.6}
+            penumbra={1}
+            intensity={60}
+            color="#e10600"
+          />
           <directionalLight position={[4, 6, 4]} intensity={0.6} />
           <CarModel
             color={teamColor}
@@ -365,17 +585,49 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
             onHover={setHovered}
             autoRotate={autoRotate && !selected}
           />
-          <ContactShadows position={[0, 0.01, 0]} opacity={0.75} scale={14} blur={2.4} far={3} />
+          <ContactShadows
+            position={[0, 0.01, 0]}
+            opacity={0.75}
+            scale={14}
+            blur={2.4}
+            far={3}
+          />
           {/* floor disc */}
           <mesh rotation-x={-Math.PI / 2} position-y={-0.002} receiveShadow>
             <circleGeometry args={[7, 48]} />
-            <meshStandardMaterial color="#101013" roughness={0.7} metalness={0.25} />
+            <meshStandardMaterial
+              color="#101013"
+              roughness={0.7}
+              metalness={0.25}
+            />
           </mesh>
           <Environment resolution={128}>
-            <Lightformer intensity={2.2} position={[0, 5, 0]} scale={[10, 10, 1]} rotation-x={Math.PI / 2} />
-            <Lightformer intensity={0.9} color="#8b93a5" position={[-5, 1, -1]} rotation-y={Math.PI / 2} scale={[16, 1, 1]} />
-            <Lightformer intensity={0.9} color="#8b93a5" position={[5, 1, 1]} rotation-y={-Math.PI / 2} scale={[16, 1, 1]} />
-            <Lightformer intensity={1.4} color={teamColor} position={[0, 1.2, -5]} scale={[8, 0.6, 1]} />
+            <Lightformer
+              intensity={2.2}
+              position={[0, 5, 0]}
+              scale={[10, 10, 1]}
+              rotation-x={Math.PI / 2}
+            />
+            <Lightformer
+              intensity={0.9}
+              color="#8b93a5"
+              position={[-5, 1, -1]}
+              rotation-y={Math.PI / 2}
+              scale={[16, 1, 1]}
+            />
+            <Lightformer
+              intensity={0.9}
+              color="#8b93a5"
+              position={[5, 1, 1]}
+              rotation-y={-Math.PI / 2}
+              scale={[16, 1, 1]}
+            />
+            <Lightformer
+              intensity={1.4}
+              color={teamColor}
+              position={[0, 1.2, -5]}
+              scale={[8, 0.6, 1]}
+            />
           </Environment>
           <OrbitControls
             ref={controls}
@@ -394,7 +646,10 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
             {(Object.keys(VIEWS) as (keyof typeof VIEWS)[]).map((v) => (
               <button
                 key={v}
-                onClick={() => { setSelected(null); setViewName(v); }}
+                onClick={() => {
+                  setSelected(null);
+                  setViewName(v);
+                }}
                 className={`rounded-sm border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors ${
                   viewName === v && !selected
                     ? "border-primary bg-primary text-primary-foreground"
@@ -422,8 +677,12 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
         </div>
 
         <div className="pointer-events-none absolute left-4 top-4">
-          <p className="eyebrow text-[10px] text-muted-foreground">{teamName} · {car.designation}</p>
-          <p className="mt-1 text-xs text-muted-foreground/70">Drag to rotate · scroll to zoom · click a component</p>
+          <p className="eyebrow text-[10px] text-muted-foreground">
+            {teamName} · {car.designation}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            Drag to rotate · scroll to zoom · click a component
+          </p>
         </div>
       </div>
 
@@ -433,16 +692,23 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
         {annotation ? (
           <div className="mt-4">
             <h4 className="headline text-xl">{annotation.name}</h4>
-            <p className="mt-3 text-sm leading-relaxed text-foreground/90">{annotation.plain}</p>
+            <p className="mt-3 text-sm leading-relaxed text-foreground/90">
+              {annotation.plain}
+            </p>
             <div className="mt-5 border-t border-border pt-4">
-              <p className="eyebrow text-[10px] text-muted-foreground">Deeper technical detail</p>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{annotation.deep}</p>
+              <p className="eyebrow text-[10px] text-muted-foreground">
+                Deeper technical detail
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                {annotation.deep}
+              </p>
             </div>
           </div>
         ) : (
           <div className="mt-4">
             <p className="text-sm text-muted-foreground">
-              Select a component on the car — front wing, suspension, floor, sidepods, rear wing and more — to read what it does.
+              Select a component on the car — front wing, suspension, floor,
+              sidepods, rear wing and more — to read what it does.
             </p>
             <div className="mt-5 space-y-1.5">
               {car.components.map((c) => (
@@ -456,7 +722,8 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
               ))}
             </div>
             <p className="mt-6 text-[11px] leading-relaxed text-muted-foreground/70">
-              Stylised geometry for annotation, not a dimensionally accurate CAD model. Camera moves to the selected component.
+              Stylised geometry for annotation, not a dimensionally accurate CAD
+              model. Camera moves to the selected component.
             </p>
           </div>
         )}

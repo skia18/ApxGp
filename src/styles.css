@@ -131,8 +131,13 @@
 }
 
 @utility hero-veil {
-  background:
-    linear-gradient(180deg, oklch(0.13 0.012 260 / 92%) 0%, oklch(0.13 0.012 260 / 55%) 30%, oklch(0.13 0.012 260 / 88%) 78%, oklch(0.135 0.012 260) 100%);
+  background: linear-gradient(
+    180deg,
+    oklch(0.13 0.012 260 / 92%) 0%,
+    oklch(0.13 0.012 260 / 55%) 30%,
+    oklch(0.13 0.012 260 / 88%) 78%,
+    oklch(0.135 0.012 260) 100%
+  );
 }
 
 @utility red-accent-bar {

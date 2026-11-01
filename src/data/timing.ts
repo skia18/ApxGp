@@ -13,7 +13,14 @@ export const sampleSession = {
   totalLaps: 71,
   weather: { track: 41, air: 26, condition: "Clear" },
   // A demo control so every session state can be inspected honestly.
-  states: ["upcoming", "live", "suspended", "finished", "delayed", "unavailable"] as SessionState[],
+  states: [
+    "upcoming",
+    "live",
+    "suspended",
+    "finished",
+    "delayed",
+    "unavailable",
+  ] as SessionState[],
 };
 
 // Deterministic pseudo-random generator so SSR and client render match.
@@ -41,10 +48,7 @@ const buildRows = (): TimingRow[] =>
       driverId: dr.id,
       lapNumber: retired ? null : 20 + Math.floor(r(7) * 14),
       gapToLeader: retired ? null : gap ? `+${gap}` : "Leader",
-      interval:
-        retired || i === 0
-          ? null
-          : `+${(r(8) * 1.8 + 0.4).toFixed(3)}`,
+      interval: retired || i === 0 ? null : `+${(r(8) * 1.8 + 0.4).toFixed(3)}`,
       lastLap: retired ? null : fmt(last + (COMPOUND_LAP[compound] ?? 0)),
       bestLap: retired ? null : fmt(best + (COMPOUND_LAP[compound] ?? 0)),
       sectors: [
@@ -73,8 +77,16 @@ const buildStrategy = (): StrategyData[] =>
       lapTimes.push({ lap, seconds: +(base + deg + noise).toFixed(3) });
     }
     const stints = [
-      { compound: "M" as const, startLap: 1, endLap: 14 + Math.floor(r(3) * 4) },
-      { compound: "H" as const, startLap: 15 + Math.floor(r(3) * 4), endLap: 33 },
+      {
+        compound: "M" as const,
+        startLap: 1,
+        endLap: 14 + Math.floor(r(3) * 4),
+      },
+      {
+        compound: "H" as const,
+        startLap: 15 + Math.floor(r(3) * 4),
+        endLap: 33,
+      },
     ];
     const pitLaps = [stints[0]!.endLap + 1];
     const positionByLap: { lap: number; position: number }[] = [];

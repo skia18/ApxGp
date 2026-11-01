@@ -15,12 +15,13 @@ const NAV = [
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <Link to="/" className="flex items-center gap-2.5 group">
-      <span className="flex h-7 w-7 items-center justify-center bg-primary text-primary-foreground rounded-[4px]">
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 19 L20 5" />
-          <path d="M14 5 H20 V11" />
-        </svg>
-      </span>
+      <img
+        src="/favicon.png"
+        alt=""
+        className="h-7 w-7 rounded-[4px] object-cover"
+        width={28}
+        height={28}
+      />
       {!compact && (
         <span className="headline text-lg tracking-tight">
           Apex<span className="text-primary"> F1</span>
@@ -68,7 +69,9 @@ export function SiteHeader() {
           >
             <Search className="h-3.5 w-3.5" />
             <span className="pr-6">Search drivers, teams, cars…</span>
-            <kbd className="rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono">⌘K</kbd>
+            <kbd className="rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono">
+              ⌘K
+            </kbd>
           </button>
           <button
             onClick={() => setSearchOpen(true)}
@@ -82,7 +85,11 @@ export function SiteHeader() {
             className="lg:hidden p-2 text-foreground"
             aria-label="Menu"
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>

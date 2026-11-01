@@ -1,5 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { drivers } from "@/data/drivers";
 import { constructors } from "@/data/constructors";
 import { cars } from "@/data/cars";
@@ -61,7 +68,9 @@ export function SearchDialog({ open, onOpenChange }: Props) {
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandInput placeholder="Search drivers, teams, cars, circuits and seasons…" />
       <CommandList>
-        <CommandEmpty>No results. Sample data covers the current season.</CommandEmpty>
+        <CommandEmpty>
+          No results. Sample data covers the current season.
+        </CommandEmpty>
         {results.map((group) => (
           <CommandGroup key={group.heading} heading={group.heading}>
             {group.items.map((item) => (

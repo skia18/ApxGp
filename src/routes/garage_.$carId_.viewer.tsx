@@ -11,10 +11,22 @@ export const Route = createFileRoute("/garage_/$carId_/viewer")({
     const car = carById(params.carId);
     return {
       meta: [
-        { title: car ? `${car.designation} 3D Viewer — Apex F1` : "3D Viewer — Apex F1" },
-        { name: "description", content: "Interactive 3D car studio viewer with technical component annotations." },
+        {
+          title: car
+            ? `${car.designation} 3D Viewer — Apex F1`
+            : "3D Viewer — Apex F1",
+        },
+        {
+          name: "description",
+          content:
+            "Interactive 3D car studio viewer with technical component annotations.",
+        },
         { property: "og:title", content: "3D Viewer — Apex F1" },
-        { property: "og:description", content: "Rotate, zoom and inspect an F1 car with technical annotations." },
+        {
+          property: "og:description",
+          content:
+            "Rotate, zoom and inspect an F1 car with technical annotations.",
+        },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
       ],
@@ -42,7 +54,11 @@ function ViewerPage() {
           <ArrowLeft className="h-3.5 w-3.5" /> Back to {car.designation}
         </Link>
       </div>
-      <CarViewer car={car} teamColor={team?.color ?? "#e10600"} teamName={team?.name ?? ""} />
+      <CarViewer
+        car={car}
+        teamColor={team?.color ?? "#e10600"}
+        teamName={team?.name ?? ""}
+      />
     </div>
   );
 }

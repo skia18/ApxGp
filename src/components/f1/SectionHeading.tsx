@@ -47,7 +47,9 @@ export function PageTitle({
       {eyebrow && <p className="eyebrow text-primary">{eyebrow}</p>}
       <h1 className="headline mt-2 text-3xl sm:text-5xl">{title}</h1>
       {description && (
-        <p className="mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">{description}</p>
+        <p className="mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
+          {description}
+        </p>
       )}
       {children && <div className="mt-6">{children}</div>}
     </div>

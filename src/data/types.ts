@@ -107,12 +107,7 @@ export interface Car {
 }
 
 export type SessionState =
-  | "upcoming"
-  | "live"
-  | "suspended"
-  | "finished"
-  | "delayed"
-  | "unavailable";
+  "upcoming" | "live" | "suspended" | "finished" | "delayed" | "unavailable";
 
 export interface TimingRow {
   position: number;

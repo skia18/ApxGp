@@ -4,763 +4,763 @@
  */
 
 export interface paths {
-    "/health/live": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Confirm that the API process is running */
-        get: operations["getLiveness"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  "/health/live": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/health/ready": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Confirm that required dependencies are available */
-        get: operations["getReadiness"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Confirm that the API process is running */
+    get: operations["getLiveness"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/health/ready": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/seasons/current": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get the current or latest available season */
-        get: operations["getCurrentSeason"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Confirm that required dependencies are available */
+    get: operations["getReadiness"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/seasons/current": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/seasons/{year}/races": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List races for a season */
-        get: operations["listSeasonRaces"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Get the current or latest available season */
+    get: operations["getCurrentSeason"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/seasons/{year}/races": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/races/next": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get the next race after the current time */
-        get: operations["getNextRace"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** List races for a season */
+    get: operations["listSeasonRaces"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/races/next": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/races/{raceId}/sessions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List imported sessions for a race */
-        get: operations["listRaceSessions"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Get the next race after the current time */
+    get: operations["getNextRace"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/races/{raceId}/sessions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/sessions/{sessionId}/classification": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get race or qualifying classification */
-        get: operations["getSessionClassification"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** List imported sessions for a race */
+    get: operations["listRaceSessions"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/sessions/{sessionId}/classification": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/drivers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List known drivers */
-        get: operations["listDrivers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Get race or qualifying classification */
+    get: operations["getSessionClassification"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/drivers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/drivers/{driverId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a driver */
-        get: operations["getDriver"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** List known drivers */
+    get: operations["listDrivers"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/drivers/{driverId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/teams": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List known constructors */
-        get: operations["listTeams"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Get a driver */
+    get: operations["getDriver"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/teams": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/teams/{teamId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a constructor */
-        get: operations["getTeam"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** List known constructors */
+    get: operations["listTeams"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/teams/{teamId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/seasons/{year}/driver-standings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get driver championship standings */
-        get: operations["getDriverStandings"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Get a constructor */
+    get: operations["getTeam"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/seasons/{year}/driver-standings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/seasons/{year}/constructor-standings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get constructor championship standings */
-        get: operations["getConstructorStandings"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Get driver championship standings */
+    get: operations["getDriverStandings"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/seasons/{year}/constructor-standings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /** Get constructor championship standings */
+    get: operations["getConstructorStandings"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        HealthResponse: {
-            /** @constant */
-            status: "ok";
-        };
-        ErrorResponse: {
-            error: components["schemas"]["APIError"];
-        };
-        APIError: {
-            /** @example not_found */
-            code: string;
-            message: string;
-            requestId?: string;
-        };
-        Season: {
-            /** Format: uuid */
-            id: string;
-            year: number;
-            isCurrent: boolean;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        Circuit: {
-            /** Format: uuid */
-            id: string;
-            slug: string;
-            name: string;
-            locality: string;
-            country: string;
-            latitude?: number;
-            longitude?: number;
-        };
-        Race: {
-            /** Format: uuid */
-            id: string;
-            season: number;
-            round: number;
-            slug: string;
-            name: string;
-            /** Format: date-time */
-            startsAt: string;
-            circuit: components["schemas"]["Circuit"];
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        Freshness: {
-            source: string;
-            /** Format: date-time */
-            retrievedAt: string;
-            stale: boolean;
-        };
-        RacePage: {
-            items: components["schemas"]["Race"][];
-            total: number;
-            freshness?: components["schemas"]["Freshness"];
-        };
-        Driver: {
-            /** Format: uuid */
-            id: string;
-            slug: string;
-            givenName: string;
-            familyName: string;
-            code?: string;
-            permanentNumber?: number;
-            /** Format: date-time */
-            dateOfBirth?: string;
-            nationality: string;
-        };
-        Constructor: {
-            /** Format: uuid */
-            id: string;
-            slug: string;
-            name: string;
-            nationality: string;
-        };
-        DriverStanding: {
-            position: number;
-            points: number;
-            wins: number;
-            driver: components["schemas"]["Driver"];
-            constructor?: {
-                /** Format: uuid */
-                id: string;
-                slug: string;
-                name: string;
-                nationality: string;
-            };
-        };
-        ConstructorStanding: {
-            position: number;
-            points: number;
-            wins: number;
-            constructor: {
-                /** Format: uuid */
-                id: string;
-                slug: string;
-                name: string;
-                nationality: string;
-            };
-        };
-        DriverListResponse: {
-            data: {
-                items: components["schemas"]["Driver"][];
-                total: number;
-            };
-        };
-        ConstructorListResponse: {
-            data: {
-                items: components["schemas"]["Constructor"][];
-                total: number;
-            };
-        };
-        DriverStandingsResponse: {
-            data: {
-                items: components["schemas"]["DriverStanding"][];
-                total: number;
-                freshness?: components["schemas"]["Freshness"];
-            };
-        };
-        ConstructorStandingsResponse: {
-            data: {
-                items: components["schemas"]["ConstructorStanding"][];
-                total: number;
-                freshness?: components["schemas"]["Freshness"];
-            };
-        };
-        Session: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            raceId: string;
-            /** @enum {string} */
-            type: "practice" | "qualifying" | "sprint_qualifying" | "sprint" | "race";
-            name: string;
-            /** Format: date-time */
-            startsAt?: string;
-        };
-        RaceClassification: {
-            position: number;
-            positionText: string;
-            points: number;
-            grid: number;
-            laps: number;
-            status: string;
-            /** Format: int64 */
-            elapsedMillis?: number;
-            fastestLapRank?: number;
-            fastestLap?: string;
-            driver: components["schemas"]["Driver"];
-            constructor: {
-                /** Format: uuid */
-                id: string;
-                slug: string;
-                name: string;
-                nationality: string;
-            };
-        };
-        QualifyingClassification: {
-            position: number;
-            q1?: string;
-            q2?: string;
-            q3?: string;
-            driver: components["schemas"]["Driver"];
-            constructor: {
-                /** Format: uuid */
-                id: string;
-                slug: string;
-                name: string;
-                nationality: string;
-            };
-        };
-        SessionListResponse: {
-            data: {
-                items: components["schemas"]["Session"][];
-                total: number;
-            };
-        };
-        ClassificationResponse: {
-            data: {
-                session: components["schemas"]["Session"];
-                race?: components["schemas"]["RaceClassification"][];
-                qualifying?: components["schemas"]["QualifyingClassification"][];
-                freshness?: components["schemas"]["Freshness"];
-            };
-        };
+  schemas: {
+    HealthResponse: {
+      /** @constant */
+      status: "ok";
     };
-    responses: {
-        /** @description Invalid request */
-        BadRequest: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
-        /** @description Resource not found */
-        NotFound: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
-        /** @description Internal API error */
-        InternalError: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
-        /** @description A required dependency is unavailable */
-        ServiceUnavailable: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
+    ErrorResponse: {
+      error: components["schemas"]["APIError"];
     };
-    parameters: {
-        /** @example 2026 */
-        SeasonYear: number;
+    APIError: {
+      /** @example not_found */
+      code: string;
+      message: string;
+      requestId?: string;
     };
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    Season: {
+      /** Format: uuid */
+      id: string;
+      year: number;
+      isCurrent: boolean;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    Circuit: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      name: string;
+      locality: string;
+      country: string;
+      latitude?: number;
+      longitude?: number;
+    };
+    Race: {
+      /** Format: uuid */
+      id: string;
+      season: number;
+      round: number;
+      slug: string;
+      name: string;
+      /** Format: date-time */
+      startsAt: string;
+      circuit: components["schemas"]["Circuit"];
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    Freshness: {
+      source: string;
+      /** Format: date-time */
+      retrievedAt: string;
+      stale: boolean;
+    };
+    RacePage: {
+      items: components["schemas"]["Race"][];
+      total: number;
+      freshness?: components["schemas"]["Freshness"];
+    };
+    Driver: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      givenName: string;
+      familyName: string;
+      code?: string;
+      permanentNumber?: number;
+      /** Format: date-time */
+      dateOfBirth?: string;
+      nationality: string;
+    };
+    Constructor: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      name: string;
+      nationality: string;
+    };
+    DriverStanding: {
+      position: number;
+      points: number;
+      wins: number;
+      driver: components["schemas"]["Driver"];
+      constructor?: {
+        /** Format: uuid */
+        id: string;
+        slug: string;
+        name: string;
+        nationality: string;
+      };
+    };
+    ConstructorStanding: {
+      position: number;
+      points: number;
+      wins: number;
+      constructor: {
+        /** Format: uuid */
+        id: string;
+        slug: string;
+        name: string;
+        nationality: string;
+      };
+    };
+    DriverListResponse: {
+      data: {
+        items: components["schemas"]["Driver"][];
+        total: number;
+      };
+    };
+    ConstructorListResponse: {
+      data: {
+        items: components["schemas"]["Constructor"][];
+        total: number;
+      };
+    };
+    DriverStandingsResponse: {
+      data: {
+        items: components["schemas"]["DriverStanding"][];
+        total: number;
+        freshness?: components["schemas"]["Freshness"];
+      };
+    };
+    ConstructorStandingsResponse: {
+      data: {
+        items: components["schemas"]["ConstructorStanding"][];
+        total: number;
+        freshness?: components["schemas"]["Freshness"];
+      };
+    };
+    Session: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      raceId: string;
+      /** @enum {string} */
+      type: "practice" | "qualifying" | "sprint_qualifying" | "sprint" | "race";
+      name: string;
+      /** Format: date-time */
+      startsAt?: string;
+    };
+    RaceClassification: {
+      position: number;
+      positionText: string;
+      points: number;
+      grid: number;
+      laps: number;
+      status: string;
+      /** Format: int64 */
+      elapsedMillis?: number;
+      fastestLapRank?: number;
+      fastestLap?: string;
+      driver: components["schemas"]["Driver"];
+      constructor: {
+        /** Format: uuid */
+        id: string;
+        slug: string;
+        name: string;
+        nationality: string;
+      };
+    };
+    QualifyingClassification: {
+      position: number;
+      q1?: string;
+      q2?: string;
+      q3?: string;
+      driver: components["schemas"]["Driver"];
+      constructor: {
+        /** Format: uuid */
+        id: string;
+        slug: string;
+        name: string;
+        nationality: string;
+      };
+    };
+    SessionListResponse: {
+      data: {
+        items: components["schemas"]["Session"][];
+        total: number;
+      };
+    };
+    ClassificationResponse: {
+      data: {
+        session: components["schemas"]["Session"];
+        race?: components["schemas"]["RaceClassification"][];
+        qualifying?: components["schemas"]["QualifyingClassification"][];
+        freshness?: components["schemas"]["Freshness"];
+      };
+    };
+  };
+  responses: {
+    /** @description Invalid request */
+    BadRequest: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": components["schemas"]["ErrorResponse"];
+      };
+    };
+    /** @description Resource not found */
+    NotFound: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": components["schemas"]["ErrorResponse"];
+      };
+    };
+    /** @description Internal API error */
+    InternalError: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": components["schemas"]["ErrorResponse"];
+      };
+    };
+    /** @description A required dependency is unavailable */
+    ServiceUnavailable: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": components["schemas"]["ErrorResponse"];
+      };
+    };
+  };
+  parameters: {
+    /** @example 2026 */
+    SeasonYear: number;
+  };
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getLiveness: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description API process is alive */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
-        };
+  getLiveness: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    getReadiness: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description API process is alive */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description API is ready */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
-            503: components["responses"]["ServiceUnavailable"];
+        content: {
+          "application/json": components["schemas"]["HealthResponse"];
         };
+      };
     };
-    getCurrentSeason: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current season */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["Season"];
-                    };
-                };
-            };
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalError"];
-        };
+  };
+  getReadiness: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    listSeasonRaces: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @example 2026 */
-                year: components["parameters"]["SeasonYear"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description API is ready */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Season race calendar */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["RacePage"];
-                    };
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            500: components["responses"]["InternalError"];
+        content: {
+          "application/json": components["schemas"]["HealthResponse"];
         };
+      };
+      503: components["responses"]["ServiceUnavailable"];
     };
-    getNextRace: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Next race */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["Race"];
-                        freshness?: components["schemas"]["Freshness"];
-                    };
-                };
-            };
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalError"];
-        };
+  };
+  getCurrentSeason: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    listRaceSessions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                raceId: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Current season */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Race sessions */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SessionListResponse"];
-                };
-            };
-            404: components["responses"]["NotFound"];
+        content: {
+          "application/json": {
+            data: components["schemas"]["Season"];
+          };
         };
+      };
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
     };
-    getSessionClassification: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sessionId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Session classification */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClassificationResponse"];
-                };
-            };
-            404: components["responses"]["NotFound"];
-        };
+  };
+  listSeasonRaces: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @example 2026 */
+        year: components["parameters"]["SeasonYear"];
+      };
+      cookie?: never;
     };
-    listDrivers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Season race calendar */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Drivers */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DriverListResponse"];
-                };
-            };
+        content: {
+          "application/json": {
+            data: components["schemas"]["RacePage"];
+          };
         };
+      };
+      400: components["responses"]["BadRequest"];
+      500: components["responses"]["InternalError"];
     };
-    getDriver: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                driverId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Driver */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["Driver"];
-                    };
-                };
-            };
-            404: components["responses"]["NotFound"];
-        };
+  };
+  getNextRace: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    listTeams: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Next race */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Constructors */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConstructorListResponse"];
-                };
-            };
+        content: {
+          "application/json": {
+            data: components["schemas"]["Race"];
+            freshness?: components["schemas"]["Freshness"];
+          };
         };
+      };
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
     };
-    getTeam: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                teamId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Constructor */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["Constructor"];
-                    };
-                };
-            };
-            404: components["responses"]["NotFound"];
-        };
+  };
+  listRaceSessions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        raceId: string;
+      };
+      cookie?: never;
     };
-    getDriverStandings: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @example 2026 */
-                year: components["parameters"]["SeasonYear"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Race sessions */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Driver standings */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DriverStandingsResponse"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
+        content: {
+          "application/json": components["schemas"]["SessionListResponse"];
         };
+      };
+      404: components["responses"]["NotFound"];
     };
-    getConstructorStandings: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @example 2026 */
-                year: components["parameters"]["SeasonYear"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Constructor standings */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConstructorStandingsResponse"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-        };
+  };
+  getSessionClassification: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sessionId: string;
+      };
+      cookie?: never;
     };
+    requestBody?: never;
+    responses: {
+      /** @description Session classification */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClassificationResponse"];
+        };
+      };
+      404: components["responses"]["NotFound"];
+    };
+  };
+  listDrivers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Drivers */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DriverListResponse"];
+        };
+      };
+    };
+  };
+  getDriver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        driverId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Driver */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["Driver"];
+          };
+        };
+      };
+      404: components["responses"]["NotFound"];
+    };
+  };
+  listTeams: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Constructors */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ConstructorListResponse"];
+        };
+      };
+    };
+  };
+  getTeam: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        teamId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Constructor */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["Constructor"];
+          };
+        };
+      };
+      404: components["responses"]["NotFound"];
+    };
+  };
+  getDriverStandings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @example 2026 */
+        year: components["parameters"]["SeasonYear"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Driver standings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DriverStandingsResponse"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+    };
+  };
+  getConstructorStandings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @example 2026 */
+        year: components["parameters"]["SeasonYear"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Constructor standings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ConstructorStandingsResponse"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+    };
+  };
 }

@@ -400,7 +400,8 @@ components:
           type: object
           required: [items, total]
           properties:
-            items: { type: array, items: { $ref: "#/components/schemas/Driver" } }
+            items:
+              { type: array, items: { $ref: "#/components/schemas/Driver" } }
             total: { type: integer }
     ConstructorListResponse:
       type: object
@@ -410,7 +411,11 @@ components:
           type: object
           required: [items, total]
           properties:
-            items: { type: array, items: { $ref: "#/components/schemas/Constructor" } }
+            items:
+              {
+                type: array,
+                items: { $ref: "#/components/schemas/Constructor" },
+              }
             total: { type: integer }
     DriverStandingsResponse:
       type: object
@@ -420,7 +425,11 @@ components:
           type: object
           required: [items, total]
           properties:
-            items: { type: array, items: { $ref: "#/components/schemas/DriverStanding" } }
+            items:
+              {
+                type: array,
+                items: { $ref: "#/components/schemas/DriverStanding" },
+              }
             total: { type: integer }
             freshness: { $ref: "#/components/schemas/Freshness" }
     ConstructorStandingsResponse:
@@ -431,7 +440,11 @@ components:
           type: object
           required: [items, total]
           properties:
-            items: { type: array, items: { $ref: "#/components/schemas/ConstructorStanding" } }
+            items:
+              {
+                type: array,
+                items: { $ref: "#/components/schemas/ConstructorStanding" },
+              }
             total: { type: integer }
             freshness: { $ref: "#/components/schemas/Freshness" }
     Session:
@@ -440,12 +453,26 @@ components:
       properties:
         id: { type: string, format: uuid }
         raceId: { type: string, format: uuid }
-        type: { type: string, enum: [practice, qualifying, sprint_qualifying, sprint, race] }
+        type:
+          {
+            type: string,
+            enum: [practice, qualifying, sprint_qualifying, sprint, race],
+          }
         name: { type: string }
         startsAt: { type: string, format: date-time }
     RaceClassification:
       type: object
-      required: [position, positionText, points, grid, laps, status, driver, constructor]
+      required:
+        [
+          position,
+          positionText,
+          points,
+          grid,
+          laps,
+          status,
+          driver,
+          constructor,
+        ]
       properties:
         position: { type: integer }
         positionText: { type: string }
@@ -476,7 +503,8 @@ components:
           type: object
           required: [items, total]
           properties:
-            items: { type: array, items: { $ref: "#/components/schemas/Session" } }
+            items:
+              { type: array, items: { $ref: "#/components/schemas/Session" } }
             total: { type: integer }
     ClassificationResponse:
       type: object
@@ -487,6 +515,15 @@ components:
           required: [session]
           properties:
             session: { $ref: "#/components/schemas/Session" }
-            race: { type: array, items: { $ref: "#/components/schemas/RaceClassification" } }
-            qualifying: { type: array, items: { $ref: "#/components/schemas/QualifyingClassification" } }
+            race:
+              {
+                type: array,
+                items: { $ref: "#/components/schemas/RaceClassification" },
+              }
+            qualifying:
+              {
+                type: array,
+                items:
+                  { $ref: "#/components/schemas/QualifyingClassification" },
+              }
             freshness: { $ref: "#/components/schemas/Freshness" }
