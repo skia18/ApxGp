@@ -135,6 +135,34 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/LiveTimingResponse" }
         "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /api/v1/live/weekend:
+    get:
+      operationId: getLiveWeekend
+      summary: Get the latest meeting's real session schedule
+      responses:
+        "200":
+          description: Latest meeting schedule
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LiveWeekendResponse" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /api/v1/live/sessions/{sessionKey}/timing:
+    get:
+      operationId: getLiveSessionTiming
+      summary: Get timing results for a meeting session
+      parameters:
+        - name: sessionKey
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Session timing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LiveTimingResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
   /api/v1/drivers:
     get:
       operationId: listDrivers
@@ -576,3 +604,32 @@ components:
       required: [data]
       properties:
         data: { $ref: "#/components/schemas/LiveTiming" }
+    WeekendSession:
+      type: object
+      required:
+        [sessionKey, meetingKey, type, name, startsAt, endsAt, isCancelled]
+      properties:
+        sessionKey: { type: integer }
+        meetingKey: { type: integer }
+        type: { type: string }
+        name: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        isCancelled: { type: boolean }
+    LiveWeekend:
+      type: object
+      required: [meetingKey, meetingName, sessions, freshness]
+      properties:
+        meetingKey: { type: integer }
+        meetingName: { type: string }
+        sessions:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/WeekendSession" },
+          }
+        freshness: { $ref: "#/components/schemas/Freshness" }
+    LiveWeekendResponse:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/LiveWeekend" }

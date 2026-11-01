@@ -37,6 +37,8 @@ type ClassificationService interface {
 
 type LiveTimingService interface {
 	Timing(context.Context) (domain.LiveTiming, error)
+	Weekend(context.Context) (domain.LiveWeekend, error)
+	SessionTiming(context.Context, int) (domain.LiveTiming, error)
 }
 
 func NewRouter(health HealthChecker, calendar CalendarService, grid GridService, classifications ClassificationService, liveTiming LiveTimingService, allowedOrigins []string) http.Handler {
@@ -147,6 +149,27 @@ func NewRouter(health HealthChecker, calendar CalendarService, grid GridService,
 		item, err := liveTiming.Timing(r.Context())
 		if err != nil {
 			writeError(w, r, http.StatusServiceUnavailable, "live_timing_unavailable", "The live timing provider is unavailable.")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"data": item})
+	})
+	mux.HandleFunc("GET /api/v1/live/weekend", func(w http.ResponseWriter, r *http.Request) {
+		item, err := liveTiming.Weekend(r.Context())
+		if err != nil {
+			writeError(w, r, http.StatusServiceUnavailable, "weekend_unavailable", "The live weekend schedule is unavailable.")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"data": item})
+	})
+	mux.HandleFunc("GET /api/v1/live/sessions/{sessionKey}/timing", func(w http.ResponseWriter, r *http.Request) {
+		key, err := strconv.Atoi(r.PathValue("sessionKey"))
+		if err != nil || key <= 0 {
+			writeError(w, r, http.StatusBadRequest, "invalid_session", "Session key must be a positive integer.")
+			return
+		}
+		item, err := liveTiming.SessionTiming(r.Context(), key)
+		if err != nil {
+			writeError(w, r, http.StatusServiceUnavailable, "session_timing_unavailable", "The session timing is unavailable.")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"data": item})

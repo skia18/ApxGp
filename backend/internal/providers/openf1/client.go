@@ -68,6 +68,80 @@ func (c *Client) Timing(ctx context.Context) (domain.LiveTiming, error) {
 	return snapshot, nil
 }
 
+func (c *Client) Weekend(ctx context.Context) (domain.LiveWeekend, error) {
+	var sessions []sessionPayload
+	if err := c.getWithQuery(ctx, "sessions", "meeting_key", "latest", &sessions); err != nil {
+		return domain.LiveWeekend{}, err
+	}
+	result := domain.LiveWeekend{Sessions: make([]domain.WeekendSession, 0, len(sessions)), Freshness: domain.Freshness{Source: "openf1", RetrievedAt: time.Now().UTC()}}
+	for _, item := range sessions {
+		result.MeetingKey = item.MeetingKey
+		result.MeetingName = item.Location + " Grand Prix"
+		result.Sessions = append(result.Sessions, domain.WeekendSession{SessionKey: item.SessionKey, MeetingKey: item.MeetingKey, Type: strings.ToLower(item.SessionType), Name: item.SessionName, StartsAt: item.DateStart, EndsAt: item.DateEnd, IsCancelled: item.IsCancelled})
+	}
+	return result, nil
+}
+
+func (c *Client) SessionTiming(ctx context.Context, sessionKey int) (domain.LiveTiming, error) {
+	key := strconv.Itoa(sessionKey)
+	var drivers []driverPayload
+	if err := c.getWithQuery(ctx, "drivers", "session_key", key, &drivers); err != nil {
+		return domain.LiveTiming{}, err
+	}
+	var results []sessionResultPayload
+	if err := c.getWithQuery(ctx, "session_result", "session_key", key, &results); err != nil {
+		return domain.LiveTiming{}, err
+	}
+	if err := c.publicRatePause(ctx); err != nil {
+		return domain.LiveTiming{}, err
+	}
+	var laps []lapPayload
+	if err := c.getWithQuery(ctx, "laps", "session_key", key, &laps); err != nil {
+		return domain.LiveTiming{}, err
+	}
+	driverByNumber := make(map[int]driverPayload)
+	for _, driver := range drivers {
+		driverByNumber[driver.DriverNumber] = driver
+	}
+	bestLapByNumber := make(map[int]lapPayload)
+	latestLapByNumber := make(map[int]lapPayload)
+	for _, lap := range laps {
+		if previous, ok := latestLapByNumber[lap.DriverNumber]; !ok || lap.LapNumber > previous.LapNumber {
+			latestLapByNumber[lap.DriverNumber] = lap
+		}
+		if lap.LapDuration == nil || *lap.LapDuration <= 0 {
+			continue
+		}
+		if previous, ok := bestLapByNumber[lap.DriverNumber]; !ok || previous.LapDuration == nil || *lap.LapDuration < *previous.LapDuration {
+			bestLapByNumber[lap.DriverNumber] = lap
+		}
+	}
+	rows := make([]domain.LiveTimingRow, 0, len(results))
+	meetingKey := 0
+	for _, item := range results {
+		driver := driverByNumber[item.DriverNumber]
+		lapNumber := item.NumberOfLaps
+		row := domain.LiveTimingRow{Position: item.Position, DriverNumber: item.DriverNumber, DriverCode: driver.NameAcronym, DriverName: firstNonEmpty(driver.FullName, driver.BroadcastName), TeamName: driver.TeamName, TeamColour: driver.TeamColour, LapNumber: &lapNumber, BestLapSeconds: finalNumber(item.Duration)}
+		if latest, ok := latestLapByNumber[item.DriverNumber]; ok {
+			row.LastLapSeconds = latest.LapDuration
+		}
+		if best, ok := bestLapByNumber[item.DriverNumber]; ok {
+			row.BestLapSeconds = best.LapDuration
+			row.Sectors = [3]*float64{best.Sector1, best.Sector2, best.Sector3}
+		}
+		if item.Position == 1 {
+			leader := "Leader"
+			row.GapToLeader = &leader
+		} else if gap := finalNumber(item.GapToLeader); gap != nil {
+			value := "+" + strconv.FormatFloat(*gap, 'f', 3, 64)
+			row.GapToLeader = &value
+		}
+		rows = append(rows, row)
+		meetingKey = item.MeetingKey
+	}
+	return domain.LiveTiming{SessionKey: sessionKey, MeetingKey: meetingKey, SessionName: "Session results", UpdatedAt: time.Now().UTC(), Rows: rows, Freshness: domain.Freshness{Source: "openf1", RetrievedAt: time.Now().UTC()}}, nil
+}
+
 func (c *Client) publicRatePause(ctx context.Context) error {
 	if c.token != "" {
 		return nil
@@ -83,12 +157,16 @@ func (c *Client) publicRatePause(ctx context.Context) error {
 }
 
 func (c *Client) get(ctx context.Context, path string, target any) error {
+	return c.getWithQuery(ctx, path, "session_key", "latest", target)
+}
+
+func (c *Client) getWithQuery(ctx context.Context, path, key, value string, target any) error {
 	endpoint, err := url.Parse(c.baseURL + "/" + path)
 	if err != nil {
 		return fmt.Errorf("build OpenF1 URL: %w", err)
 	}
 	query := endpoint.Query()
-	query.Set("session_key", "latest")
+	query.Set(key, value)
 	endpoint.RawQuery = query.Encode()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
 	if err != nil {
@@ -144,6 +222,49 @@ type lapPayload struct {
 	Sector1      *float64  `json:"duration_sector_1"`
 	Sector2      *float64  `json:"duration_sector_2"`
 	Sector3      *float64  `json:"duration_sector_3"`
+}
+
+type sessionPayload struct {
+	SessionKey  int       `json:"session_key"`
+	SessionType string    `json:"session_type"`
+	SessionName string    `json:"session_name"`
+	DateStart   time.Time `json:"date_start"`
+	DateEnd     time.Time `json:"date_end"`
+	MeetingKey  int       `json:"meeting_key"`
+	Location    string    `json:"location"`
+	IsCancelled bool      `json:"is_cancelled"`
+}
+type sessionResultPayload struct {
+	Position     int             `json:"position"`
+	DriverNumber int             `json:"driver_number"`
+	NumberOfLaps int             `json:"number_of_laps"`
+	MeetingKey   int             `json:"meeting_key"`
+	Duration     json.RawMessage `json:"duration"`
+	GapToLeader  json.RawMessage `json:"gap_to_leader"`
+}
+
+func finalNumber(raw json.RawMessage) *float64 {
+	var number float64
+	if json.Unmarshal(raw, &number) == nil {
+		return &number
+	}
+	var numbers []*float64
+	if json.Unmarshal(raw, &numbers) == nil {
+		for index := len(numbers) - 1; index >= 0; index-- {
+			if numbers[index] != nil {
+				return numbers[index]
+			}
+		}
+	}
+	return nil
+}
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func mapSnapshot(drivers []driverPayload, positions []positionPayload, intervals []intervalPayload, laps []lapPayload) domain.LiveTiming {

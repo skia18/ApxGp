@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, ChevronRight, Radio } from "lucide-react";
 import heroImage from "@/assets/hero-race.jpg";
 import featuredCarImage from "@/assets/car-studio-red.jpg";
@@ -29,6 +29,7 @@ import {
   driverStandingsQuery,
   nextRaceQuery,
   raceSessionsQuery,
+  liveWeekendQuery,
 } from "@/api/queries";
 
 export const Route = createFileRoute("/")({
@@ -80,6 +81,8 @@ function HomePage() {
     constructorStandingsQuery(currentSeason.year),
   );
   const { data: sessions } = useSuspenseQuery(raceSessionsQuery(race.id));
+  const liveWeekend = useQuery(liveWeekendQuery());
+  const weekendSessions = liveWeekend.data?.sessions ?? [];
   const featured = carById("ferrari-2026");
   const raceStart = new Date(race.startsAt).getTime();
   const raceActive =
@@ -184,34 +187,43 @@ function HomePage() {
             action={{ label: "Live timing", to: "/race-centre" }}
           />
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {sessions.map((session) => (
-              <div key={session.id} className="panel p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">{session.name}</p>
-                  <RaceStatusBadge
-                    state={
-                      session.startsAt &&
-                      new Date(session.startsAt).getTime() <
-                        Date.now() - 3 * 3600 * 1000
-                        ? "finished"
-                        : "upcoming"
+            {(weekendSessions.length > 0 ? weekendSessions : sessions).map(
+              (session) => {
+                const startsAt = session.startsAt;
+                const endsAt = "endsAt" in session ? session.endsAt : undefined;
+                const state =
+                  Date.now() < new Date(startsAt ?? race.startsAt).getTime()
+                    ? "upcoming"
+                    : endsAt && Date.now() <= new Date(endsAt).getTime()
+                      ? "live"
+                      : "finished";
+                return (
+                  <div
+                    key={
+                      "sessionKey" in session ? session.sessionKey : session.id
                     }
-                  />
-                </div>
-                <p className="mt-3 tabular text-xs text-muted-foreground">
-                  {session.startsAt
-                    ? new Date(session.startsAt).toLocaleString("en-GB", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "Start time to be confirmed"}
-                </p>
-              </div>
-            ))}
-            {sessions.length === 0 && (
+                    className="panel p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold">{session.name}</p>
+                      <RaceStatusBadge state={state} pulse={state === "live"} />
+                    </div>
+                    <p className="mt-3 tabular text-xs text-muted-foreground">
+                      {session.startsAt
+                        ? new Date(session.startsAt).toLocaleString("en-GB", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "Start time to be confirmed"}
+                    </p>
+                  </div>
+                );
+              },
+            )}
+            {weekendSessions.length === 0 && sessions.length === 0 && (
               <div className="panel p-5 text-sm text-muted-foreground sm:col-span-2 lg:col-span-4">
                 Session schedule has not been published by the data provider
                 yet.

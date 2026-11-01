@@ -11,13 +11,34 @@ type TimingProvider interface {
 	Timing(context.Context) (domain.LiveTiming, error)
 }
 
+type WeekendProvider interface {
+	Weekend(context.Context) (domain.LiveWeekend, error)
+	SessionTiming(context.Context, int) (domain.LiveTiming, error)
+}
+
 type LiveTiming struct {
 	primary  TimingProvider
 	fallback TimingProvider
+	weekend  WeekendProvider
 }
 
 func NewLiveTiming(primary, fallback TimingProvider) *LiveTiming {
-	return &LiveTiming{primary: primary, fallback: fallback}
+	weekend, _ := fallback.(WeekendProvider)
+	return &LiveTiming{primary: primary, fallback: fallback, weekend: weekend}
+}
+
+func (s *LiveTiming) Weekend(ctx context.Context) (domain.LiveWeekend, error) {
+	if s.weekend == nil {
+		return domain.LiveWeekend{}, fmt.Errorf("weekend provider unavailable")
+	}
+	return s.weekend.Weekend(ctx)
+}
+
+func (s *LiveTiming) SessionTiming(ctx context.Context, sessionKey int) (domain.LiveTiming, error) {
+	if s.weekend == nil {
+		return domain.LiveTiming{}, fmt.Errorf("weekend provider unavailable")
+	}
+	return s.weekend.SessionTiming(ctx, sessionKey)
 }
 
 func (s *LiveTiming) Timing(ctx context.Context) (domain.LiveTiming, error) {

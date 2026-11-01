@@ -166,3 +166,20 @@ type LiveTiming struct {
 	Rows        []LiveTimingRow `json:"rows"`
 	Freshness   Freshness       `json:"freshness"`
 }
+
+type WeekendSession struct {
+	SessionKey  int       `json:"sessionKey"`
+	MeetingKey  int       `json:"meetingKey"`
+	Type        string    `json:"type"`
+	Name        string    `json:"name"`
+	StartsAt    time.Time `json:"startsAt"`
+	EndsAt      time.Time `json:"endsAt"`
+	IsCancelled bool      `json:"isCancelled"`
+}
+
+type LiveWeekend struct {
+	MeetingKey  int              `json:"meetingKey"`
+	MeetingName string           `json:"meetingName"`
+	Sessions    []WeekendSession `json:"sessions"`
+	Freshness   Freshness        `json:"freshness"`
+}

@@ -48,6 +48,38 @@ func TestTimingMapsLatestRows(t *testing.T) {
 	}
 }
 
+func TestSessionTimingMapsFastestLapSectors(t *testing.T) {
+	transport := roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		if request.URL.Query().Get("session_key") != "42" {
+			t.Fatalf("unexpected session key: %s", request.URL.RawQuery)
+		}
+		payload := "[]"
+		switch request.URL.Path {
+		case "/drivers":
+			payload = `[{"driver_number":4,"full_name":"Lando Norris","name_acronym":"NOR","team_name":"McLaren","team_colour":"FF8000"}]`
+		case "/session_result":
+			payload = `[{"position":1,"driver_number":4,"number_of_laps":18,"meeting_key":10,"duration":79.5,"gap_to_leader":null}]`
+		case "/laps":
+			payload = `[{"driver_number":4,"lap_number":17,"lap_duration":79.5,"duration_sector_1":25.1,"duration_sector_2":28.2,"duration_sector_3":26.2},{"driver_number":4,"lap_number":18,"lap_duration":83.0,"duration_sector_1":26.0,"duration_sector_2":29.0,"duration_sector_3":28.0}]`
+		default:
+			t.Fatalf("unexpected path %s", request.URL.Path)
+		}
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(payload)), Header: http.Header{}}, nil
+	})
+	client := NewClient("https://example.test", "test-token", &http.Client{Transport: transport})
+	timing, err := client.SessionTiming(context.Background(), 42)
+	if err != nil {
+		t.Fatalf("SessionTiming() error = %v", err)
+	}
+	row := timing.Rows[0]
+	if row.BestLapSeconds == nil || *row.BestLapSeconds != 79.5 || row.LastLapSeconds == nil || *row.LastLapSeconds != 83.0 {
+		t.Fatalf("unexpected lap times: %+v", row)
+	}
+	if row.Sectors[0] == nil || *row.Sectors[0] != 25.1 || row.Sectors[2] == nil || *row.Sectors[2] != 26.2 {
+		t.Fatalf("unexpected fastest-lap sectors: %+v", row.Sectors)
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (fn roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) { return fn(request) }

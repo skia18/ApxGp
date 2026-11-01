@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -20,14 +20,14 @@ import { sampleStrategy, sampleSession } from "@/data/timing";
 import { circuitById } from "@/data/circuits";
 import { driverById, drivers } from "@/data/drivers";
 import type { SessionState } from "@/data/types";
-import type { Classification, Driver, Race, Session } from "@/api/client";
+import type { Race, WeekendSession } from "@/api/client";
 import {
-  classificationQuery,
   currentSeasonQuery,
   nextRaceQuery,
-  raceSessionsQuery,
   seasonRacesQuery,
   liveTimingQuery,
+  liveWeekendQuery,
+  liveSessionTimingQuery,
 } from "@/api/queries";
 
 export const Route = createFileRoute("/race-centre")({
@@ -35,10 +35,9 @@ export const Route = createFileRoute("/race-centre")({
     const currentSeason =
       await context.queryClient.ensureQueryData(currentSeasonQuery());
     const race = await context.queryClient.ensureQueryData(nextRaceQuery());
-    await Promise.all([
-      context.queryClient.ensureQueryData(seasonRacesQuery(currentSeason.year)),
-      context.queryClient.ensureQueryData(raceSessionsQuery(race.id)),
-    ]);
+    await context.queryClient.ensureQueryData(
+      seasonRacesQuery(currentSeason.year),
+    );
   },
   head: () => ({
     meta: [
@@ -61,13 +60,11 @@ export const Route = createFileRoute("/race-centre")({
   component: RaceCentre,
 });
 
-const VIEWS = ["overview", "results", "timing", "circuit", "strategy"] as const;
+const VIEWS = ["timing", "circuit", "strategy"] as const;
 type View = (typeof VIEWS)[number];
 
 const VIEW_LABELS: Record<View, string> = {
-  overview: "Event Overview",
-  results: "Results",
-  timing: "Live Timing",
+  timing: "Weekend Timing",
   circuit: "Circuit",
   strategy: "Strategy & Analysis",
 };
@@ -80,26 +77,27 @@ function RaceCentre() {
   );
   const [selectedRaceId, setSelectedRaceId] = useState(nextRace.id);
   const race = calendar.find((item) => item.id === selectedRaceId) ?? nextRace;
-  const sessionsQuery = useQuery(raceSessionsQuery(race.id));
-  const sessions = sessionsQuery.data ?? [];
-  const resultSessions = sessions.filter(
-    (session) => session.type !== "practice",
-  );
-  const [selectedSessionId, setSelectedSessionId] = useState<string>();
-  const selectedSession =
-    resultSessions.find((session) => session.id === selectedSessionId) ??
-    resultSessions.find((session) => session.type === "race") ??
-    resultSessions[0];
-  const classification = useQuery({
-    ...classificationQuery(selectedSession?.id ?? ""),
-    enabled: Boolean(selectedSession),
-  });
   const circuit = circuitById(race.circuit.slug.replaceAll("_", "-"));
   const eventState = getEventState(race);
   const [view, setView] = useState<View>("timing");
+  const weekend = useQuery(liveWeekendQuery());
+  const [selectedWeekendKey, setSelectedWeekendKey] = useState<number>();
+  const selectedWeekendSession =
+    weekend.data?.sessions.find(
+      (session) => session.sessionKey === selectedWeekendKey,
+    ) ??
+    weekend.data?.sessions.find((session) => session.type === "race") ??
+    weekend.data?.sessions.at(-1);
+  const selectedWeekendState = selectedWeekendSession
+    ? getWeekendSessionState(selectedWeekendSession)
+    : "unavailable";
   const liveTiming = useQuery({
     ...liveTimingQuery(),
-    enabled: view === "timing",
+    enabled: view === "timing" && selectedWeekendState === "live",
+  });
+  const historicalTiming = useQuery({
+    ...liveSessionTimingQuery(selectedWeekendSession?.sessionKey ?? 0),
+    enabled: view === "timing" && selectedWeekendState === "finished",
   });
   const [sessionState, setSessionState] = useState<SessionState>("live");
   const [selectedDriver, setSelectedDriver] = useState<string>(drivers[0]!.id);
@@ -130,7 +128,9 @@ function RaceCentre() {
               {eventState === "finished"
                 ? "Event completed"
                 : eventState === "live"
-                  ? "Race in progress"
+                  ? Date.now() < new Date(race.startsAt).getTime()
+                    ? "Race weekend live"
+                    : "Race in progress"
                   : "Upcoming event"}
             </span>
           </div>
@@ -139,7 +139,7 @@ function RaceCentre() {
           <p className="eyebrow text-[10px] text-muted-foreground">
             {eventState === "finished" ? "Race completed" : "Race start"}
           </p>
-          {eventState === "upcoming" ? (
+          {Date.now() < new Date(race.startsAt).getTime() ? (
             <div className="mt-3">
               <Countdown targetIso={race.startsAt} size="sm" />
             </div>
@@ -168,7 +168,6 @@ function RaceCentre() {
           value={race.id}
           onChange={(event) => {
             setSelectedRaceId(event.target.value);
-            setSelectedSessionId(undefined);
           }}
           className="min-w-64 rounded-sm border border-border bg-secondary px-3 py-2 text-sm font-semibold text-foreground"
         >
@@ -229,78 +228,130 @@ function RaceCentre() {
         )}
       </div>
 
-      {view === "overview" && (
-        <Overview
-          race={race}
-          sessions={sessions}
-          sessionsPending={sessionsQuery.isPending}
-          sessionsError={sessionsQuery.error}
-        />
-      )}
-      {view === "results" && (
-        <ResultsView
-          sessions={resultSessions}
-          selectedSession={selectedSession}
-          onSelectSession={setSelectedSessionId}
-          sessionsPending={sessionsQuery.isPending}
-          sessionsError={sessionsQuery.error}
-          classification={classification.data}
-          classificationPending={
-            classification.isPending && Boolean(selectedSession)
-          }
-          classificationError={classification.error}
-        />
-      )}
       {view === "timing" && (
         <section className="mt-6 space-y-4">
-          {liveTiming.isPending && (
+          {weekend.isPending && (
             <StatusPanel
-              title="Connecting to live timing"
-              message="Fetching the latest OpenF1 timing snapshot…"
+              title="Loading race weekend"
+              message="Fetching the official session schedule…"
             />
           )}
-          {liveTiming.error && (
+          {weekend.error && (
             <StatusPanel
-              title="Live timing unavailable"
-              message={`${liveTiming.error.message} Real-time OpenF1 access requires a server-side subscription token.`}
+              title="Weekend schedule unavailable"
+              message={weekend.error.message}
               tone="error"
             />
           )}
-          {liveTiming.data && liveTiming.data.rows.length === 0 && (
-            <StatusPanel
-              title="No timing data"
-              message="The provider returned no timing rows for its latest accessible session."
-            />
-          )}
-          {liveTiming.data && liveTiming.data.rows.length > 0 && (
-            <div className="panel">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
-                <div>
-                  <p className="headline text-sm">
-                    {liveTiming.data.sessionName}
-                  </p>
-                  <p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                    {liveTiming.data.freshness.source === "f1-signalr"
-                      ? "F1 live timing"
-                      : "OpenF1"}{" "}
-                    · session {liveTiming.data.sessionKey}
-                  </p>
-                </div>
-                <p
-                  className={`tabular text-xs ${liveTiming.data.freshness.stale ? "text-signal-amber" : "text-muted-foreground"}`}
-                >
-                  {liveTiming.data.freshness.stale
-                    ? "Historical or delayed"
-                    : "Live"}{" "}
-                  · updated{" "}
-                  {new Date(liveTiming.data.updatedAt).toLocaleTimeString(
-                    "en-GB",
-                  )}
-                </p>
-              </div>
-              <LiveTimingTable timing={liveTiming.data} />
+          {weekend.data && (
+            <div className="panel flex flex-wrap gap-2 p-3">
+              {weekend.data.sessions.map((session) => {
+                const state = getWeekendSessionState(session);
+                const active =
+                  selectedWeekendSession?.sessionKey === session.sessionKey;
+                return (
+                  <button
+                    key={session.sessionKey}
+                    onClick={() => setSelectedWeekendKey(session.sessionKey)}
+                    className={`flex min-w-36 items-center justify-between gap-3 rounded-sm border px-3 py-2 text-left ${active ? "border-primary bg-secondary" : "border-border hover:border-muted-foreground/50"}`}
+                  >
+                    <span>
+                      <span className="block text-xs font-semibold">
+                        {session.name}
+                      </span>
+                      <span className="mt-0.5 block tabular text-[10px] text-muted-foreground">
+                        {new Date(session.startsAt).toLocaleString("en-GB", {
+                          weekday: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </span>
+                    <RaceStatusBadge state={state} pulse={state === "live"} />
+                  </button>
+                );
+              })}
             </div>
           )}
+          {selectedWeekendSession && selectedWeekendState === "upcoming" && (
+            <div className="panel p-10 text-center">
+              <RaceStatusBadge state="upcoming" />
+              <p className="headline mt-4 text-2xl">
+                {selectedWeekendSession.name}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">Starts in</p>
+              <div className="mx-auto mt-5 max-w-xl">
+                <Countdown targetIso={selectedWeekendSession.startsAt} />
+              </div>
+            </div>
+          )}
+          {selectedWeekendState === "live" && liveTiming.isPending && (
+            <StatusPanel
+              title="Connecting to live timing"
+              message="Fetching the active session timing snapshot…"
+            />
+          )}
+          {selectedWeekendState === "live" && liveTiming.error && (
+            <StatusPanel
+              title="Live timing unavailable"
+              message={liveTiming.error.message}
+              tone="error"
+            />
+          )}
+          {selectedWeekendState === "finished" &&
+            historicalTiming.isPending && (
+              <StatusPanel
+                title="Loading session times"
+                message={`Fetching ${selectedWeekendSession?.name ?? "session"} classification…`}
+              />
+            )}
+          {selectedWeekendState === "finished" && historicalTiming.error && (
+            <StatusPanel
+              title="Session times unavailable"
+              message={historicalTiming.error.message}
+              tone="error"
+            />
+          )}
+          {((selectedWeekendState === "live" &&
+            liveTiming.data?.rows.length === 0) ||
+            (selectedWeekendState === "finished" &&
+              historicalTiming.data?.rows.length === 0)) && (
+            <StatusPanel
+              title="No timing data"
+              message="The provider returned no timing rows for this session."
+            />
+          )}
+          {(() => {
+            const timing =
+              selectedWeekendState === "live"
+                ? liveTiming.data
+                : selectedWeekendState === "finished"
+                  ? historicalTiming.data
+                  : undefined;
+            if (!timing || timing.rows.length === 0) return null;
+            return (
+              <div className="panel">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+                  <div>
+                    <p className="headline text-sm">
+                      {selectedWeekendSession?.name ?? timing.sessionName}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {timing.freshness.source === "f1-signalr"
+                        ? "F1 live timing"
+                        : "OpenF1"}{" "}
+                      · session {timing.sessionKey}
+                    </p>
+                  </div>
+                  <RaceStatusBadge
+                    state={selectedWeekendState}
+                    pulse={selectedWeekendState === "live"}
+                  />
+                </div>
+                <LiveTimingTable timing={timing} />
+              </div>
+            );
+          })()}
         </section>
       )}
       {view === "circuit" && circuit && (
@@ -394,8 +445,7 @@ function RaceCentre() {
               type="button"
               onClick={() => {
                 setSelectedRaceId(r.id);
-                setSelectedSessionId(undefined);
-                setView("results");
+                setView("timing");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
               className={`panel flex items-center justify-between p-4 text-left transition-colors hover:border-muted-foreground/50 ${
@@ -423,309 +473,6 @@ function RaceCentre() {
         </div>
       </section>
     </div>
-  );
-}
-
-function Overview({
-  race,
-  sessions,
-  sessionsPending,
-  sessionsError,
-}: {
-  race: Race;
-  sessions: Session[];
-  sessionsPending: boolean;
-  sessionsError: Error | null;
-}) {
-  const circuit = circuitById(race.circuit.slug.replaceAll("_", "-"));
-  return (
-    <section className="mt-6 grid gap-4 lg:grid-cols-3">
-      <div className="panel p-5 lg:col-span-2">
-        <h3 className="headline text-sm">Weekend schedule</h3>
-        <div className="mt-4 divide-y divide-border">
-          {sessionsPending && (
-            <p className="py-5 text-sm text-muted-foreground">
-              Loading session schedule…
-            </p>
-          )}
-          {sessionsError && (
-            <p className="py-5 text-sm text-primary">{sessionsError.message}</p>
-          )}
-          {sessions.map((session) => (
-            <div
-              key={session.id}
-              className="flex items-center justify-between py-3"
-            >
-              <div className="flex items-center gap-3">
-                <RaceStatusBadge
-                  state={getSessionState(session, race)}
-                  pulse={getSessionState(session, race) === "live"}
-                />
-                <span className="text-sm font-semibold">{session.name}</span>
-              </div>
-              <span className="tabular text-xs text-muted-foreground">
-                {session.startsAt
-                  ? new Date(session.startsAt).toLocaleString("en-GB", {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : "TBC"}
-              </span>
-            </div>
-          ))}
-          {!sessionsPending && !sessionsError && sessions.length === 0 && (
-            <p className="py-5 text-sm text-muted-foreground">
-              Session schedule has not been published by the data provider yet.
-            </p>
-          )}
-        </div>
-      </div>
-      <div className="space-y-4">
-        <div className="panel p-5">
-          <h3 className="headline text-sm">Circuit</h3>
-          {circuit ? (
-            <div className="mt-3">
-              <CircuitMap circuit={circuit} className="max-w-[220px]" />
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-muted-foreground">
-              Circuit illustration coming soon.
-            </p>
-          )}
-          <Link
-            to="/race-centre"
-            className="mt-3 inline-block text-xs font-semibold text-primary"
-          >
-            Circuit view →
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ResultsView({
-  sessions,
-  selectedSession,
-  onSelectSession,
-  sessionsPending,
-  sessionsError,
-  classification,
-  classificationPending,
-  classificationError,
-}: {
-  sessions: Session[];
-  selectedSession: Session | undefined;
-  onSelectSession: (sessionId: string) => void;
-  sessionsPending: boolean;
-  sessionsError: Error | null;
-  classification: Classification | undefined;
-  classificationPending: boolean;
-  classificationError: Error | null;
-}) {
-  if (sessionsPending) {
-    return (
-      <StatusPanel
-        title="Loading results"
-        message="Fetching the available sessions…"
-      />
-    );
-  }
-
-  if (sessionsError) {
-    return (
-      <StatusPanel
-        title="Results unavailable"
-        message={sessionsError.message}
-        tone="error"
-      />
-    );
-  }
-
-  if (!selectedSession) {
-    return (
-      <StatusPanel
-        title="No results yet"
-        message="No qualifying or race sessions have been imported for this Grand Prix."
-      />
-    );
-  }
-
-  return (
-    <section className="mt-6 space-y-4">
-      <div className="panel flex flex-wrap items-center gap-3 p-4">
-        <label
-          htmlFor="session-selector"
-          className="eyebrow text-[10px] text-muted-foreground"
-        >
-          Session
-        </label>
-        <select
-          id="session-selector"
-          value={selectedSession.id}
-          onChange={(event) => onSelectSession(event.target.value)}
-          className="min-w-56 rounded-sm border border-border bg-secondary px-3 py-2 text-sm font-semibold text-foreground"
-        >
-          {sessions.map((session) => (
-            <option key={session.id} value={session.id}>
-              {session.name}
-            </option>
-          ))}
-        </select>
-        <span className="text-xs text-muted-foreground">
-          Official imported classification
-        </span>
-      </div>
-
-      {classificationPending && (
-        <StatusPanel
-          title="Loading classification"
-          message="Fetching official results…"
-        />
-      )}
-      {classificationError && (
-        <StatusPanel
-          title="Classification unavailable"
-          message={classificationError.message}
-          tone="error"
-        />
-      )}
-      {classification && (
-        <ClassificationTable classification={classification} />
-      )}
-    </section>
-  );
-}
-
-function ClassificationTable({
-  classification,
-}: {
-  classification: Classification;
-}) {
-  const raceRows = classification.race ?? [];
-  const qualifyingRows = classification.qualifying ?? [];
-
-  if (raceRows.length === 0 && qualifyingRows.length === 0) {
-    return (
-      <StatusPanel
-        title="No classification available"
-        message="The session exists, but its classification has not been imported yet."
-      />
-    );
-  }
-
-  return (
-    <div className="panel overflow-x-auto">
-      <div className="border-b border-border px-5 py-4">
-        <h2 className="headline text-base">{classification.session.name}</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {raceRows.length || qualifyingRows.length} classified drivers
-        </p>
-      </div>
-      <table className="w-full min-w-[720px] text-left">
-        <thead>
-          <tr className="border-b border-border text-[10px] uppercase tracking-widest text-muted-foreground">
-            <th className="px-4 py-3 font-semibold">Pos</th>
-            <th className="px-4 py-3 font-semibold">Driver</th>
-            <th className="px-4 py-3 font-semibold">Constructor</th>
-            {raceRows.length > 0 ? (
-              <>
-                <th className="px-4 py-3 text-right font-semibold">Grid</th>
-                <th className="px-4 py-3 text-right font-semibold">Laps</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 text-right font-semibold">Points</th>
-              </>
-            ) : (
-              <>
-                <th className="px-4 py-3 text-right font-semibold">Q1</th>
-                <th className="px-4 py-3 text-right font-semibold">Q2</th>
-                <th className="px-4 py-3 text-right font-semibold">Q3</th>
-              </>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {raceRows.map((row) => (
-            <tr
-              key={row.driver.id}
-              className="border-b border-border/50 last:border-0"
-            >
-              <td className="px-4 py-3 tabular text-sm font-bold">
-                {row.positionText}
-              </td>
-              <DriverCells
-                driver={row.driver}
-                constructorName={row.constructor.name}
-              />
-              <td className="px-4 py-3 text-right tabular text-sm text-muted-foreground">
-                {row.grid || "Pit"}
-              </td>
-              <td className="px-4 py-3 text-right tabular text-sm">
-                {row.laps}
-              </td>
-              <td className="px-4 py-3 text-xs text-muted-foreground">
-                {row.status}
-              </td>
-              <td className="px-4 py-3 text-right tabular text-sm font-semibold">
-                {row.points}
-              </td>
-            </tr>
-          ))}
-          {qualifyingRows.map((row) => (
-            <tr
-              key={row.driver.id}
-              className="border-b border-border/50 last:border-0"
-            >
-              <td className="px-4 py-3 tabular text-sm font-bold">
-                {row.position}
-              </td>
-              <DriverCells
-                driver={row.driver}
-                constructorName={row.constructor.name}
-              />
-              <td className="px-4 py-3 text-right tabular text-sm">
-                {row.q1 ?? "—"}
-              </td>
-              <td className="px-4 py-3 text-right tabular text-sm">
-                {row.q2 ?? "—"}
-              </td>
-              <td className="px-4 py-3 text-right tabular text-sm">
-                {row.q3 ?? "—"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function DriverCells({
-  driver,
-  constructorName,
-}: {
-  driver: Driver;
-  constructorName: string;
-}) {
-  return (
-    <>
-      <td className="px-4 py-3">
-        <span className="text-sm font-semibold">
-          {driver.givenName} {driver.familyName}
-        </span>
-        {driver.code && (
-          <span className="ml-2 text-xs text-muted-foreground">
-            {driver.code}
-          </span>
-        )}
-      </td>
-      <td className="px-4 py-3 text-xs text-muted-foreground">
-        {constructorName}
-      </td>
-    </>
   );
 }
 
@@ -762,21 +509,15 @@ function Fact({ label, value }: { label: string; value: string }) {
 function getEventState(race: Race): SessionState {
   const startsAt = new Date(race.startsAt).getTime();
   const now = Date.now();
-  if (now < startsAt) return "upcoming";
+  if (now < startsAt - 3 * 24 * 3600_000) return "upcoming";
   if (now <= startsAt + 4 * 3600_000) return "live";
   return "finished";
 }
 
-function getSessionState(session: Session, race: Race): SessionState {
-  if (!session.startsAt) {
-    const eventState = getEventState(race);
-    if (eventState === "finished") return "finished";
-    return session.type === "race" ? eventState : "upcoming";
-  }
-
-  const startsAt = new Date(session.startsAt).getTime();
+function getWeekendSessionState(session: WeekendSession): SessionState {
   const now = Date.now();
-  if (now < startsAt) return "upcoming";
-  if (now <= startsAt + 3 * 3600_000) return "live";
+  if (session.isCancelled) return "unavailable";
+  if (now < new Date(session.startsAt).getTime()) return "upcoming";
+  if (now <= new Date(session.endsAt).getTime()) return "live";
   return "finished";
 }

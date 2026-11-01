@@ -8,6 +8,8 @@ import {
   getDriver,
   getNextRace,
   getLiveTiming,
+  getLiveWeekend,
+  getLiveSessionTiming,
   listRaceSessions,
   listConstructors,
   listDrivers,
@@ -98,4 +100,18 @@ export const liveTimingQuery = () =>
     staleTime: 3_000,
     refetchInterval: 4_000,
     retry: 1,
+  });
+
+export const liveWeekendQuery = () =>
+  queryOptions({
+    queryKey: ["live-weekend"],
+    queryFn: ({ signal }) => getLiveWeekend(signal),
+    staleTime: 60_000,
+  });
+
+export const liveSessionTimingQuery = (sessionKey: number) =>
+  queryOptions({
+    queryKey: ["live-session", sessionKey, "timing"],
+    queryFn: ({ signal }) => getLiveSessionTiming(sessionKey, signal),
+    staleTime: 5 * 60_000,
   });

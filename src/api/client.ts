@@ -10,6 +10,8 @@ export type ConstructorStanding = components["schemas"]["ConstructorStanding"];
 export type Classification =
   components["schemas"]["ClassificationResponse"]["data"];
 export type LiveTiming = components["schemas"]["LiveTiming"];
+export type LiveWeekend = components["schemas"]["LiveWeekend"];
+export type WeekendSession = components["schemas"]["WeekendSession"];
 
 const configuredBaseUrl = import.meta.env["VITE_API_BASE_URL"] as
   string | undefined;
@@ -167,6 +169,27 @@ export async function getClassification(
 export async function getLiveTiming(signal?: AbortSignal): Promise<LiveTiming> {
   const response = await get<components["schemas"]["LiveTimingResponse"]>(
     "/api/v1/live/timing",
+    signal,
+  );
+  return response.data;
+}
+
+export async function getLiveWeekend(
+  signal?: AbortSignal,
+): Promise<LiveWeekend> {
+  const response = await get<components["schemas"]["LiveWeekendResponse"]>(
+    "/api/v1/live/weekend",
+    signal,
+  );
+  return response.data;
+}
+
+export async function getLiveSessionTiming(
+  sessionKey: number,
+  signal?: AbortSignal,
+): Promise<LiveTiming> {
+  const response = await get<components["schemas"]["LiveTimingResponse"]>(
+    `/api/v1/live/sessions/${sessionKey}/timing`,
     signal,
   );
   return response.data;

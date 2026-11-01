@@ -140,6 +140,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/live/weekend": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get the latest meeting's real session schedule */
+    get: operations["getLiveWeekend"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/live/sessions/{sessionKey}/timing": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get timing results for a meeting session */
+    get: operations["getLiveSessionTiming"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/drivers": {
     parameters: {
       query?: never;
@@ -456,6 +490,26 @@ export interface components {
     LiveTimingResponse: {
       data: components["schemas"]["LiveTiming"];
     };
+    WeekendSession: {
+      sessionKey: number;
+      meetingKey: number;
+      type: string;
+      name: string;
+      /** Format: date-time */
+      startsAt: string;
+      /** Format: date-time */
+      endsAt: string;
+      isCancelled: boolean;
+    };
+    LiveWeekend: {
+      meetingKey: number;
+      meetingName: string;
+      sessions: components["schemas"]["WeekendSession"][];
+      freshness: components["schemas"]["Freshness"];
+    };
+    LiveWeekendResponse: {
+      data: components["schemas"]["LiveWeekend"];
+    };
   };
   responses: {
     /** @description Invalid request */
@@ -686,6 +740,51 @@ export interface operations {
           "application/json": components["schemas"]["LiveTimingResponse"];
         };
       };
+      503: components["responses"]["ServiceUnavailable"];
+    };
+  };
+  getLiveWeekend: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Latest meeting schedule */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LiveWeekendResponse"];
+        };
+      };
+      503: components["responses"]["ServiceUnavailable"];
+    };
+  };
+  getLiveSessionTiming: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sessionKey: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Session timing */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LiveTimingResponse"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
       503: components["responses"]["ServiceUnavailable"];
     };
   };
