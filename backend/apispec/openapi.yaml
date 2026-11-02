@@ -138,7 +138,13 @@ paths:
   /api/v1/live/weekend:
     get:
       operationId: getLiveWeekend
-      summary: Get the latest meeting's real session schedule
+      summary: Get the meeting schedule nearest a race start time
+      parameters:
+        - name: startsAt
+          in: query
+          required: false
+          description: Race start timestamp used to resolve the matching meeting; latest when omitted
+          schema: { type: string, format: date-time }
       responses:
         "200":
           description: Latest meeting schedule
@@ -635,16 +641,26 @@ components:
         isCancelled: { type: boolean }
     LiveWeekend:
       type: object
-      required: [meetingKey, meetingName, sessions, freshness]
+      required: [meetingKey, meetingName, circuit, sessions, freshness]
       properties:
         meetingKey: { type: integer }
         meetingName: { type: string }
+        circuit: { $ref: "#/components/schemas/WeekendCircuit" }
         sessions:
           {
             type: array,
             items: { $ref: "#/components/schemas/WeekendSession" },
           }
         freshness: { $ref: "#/components/schemas/Freshness" }
+    WeekendCircuit:
+      type: object
+      required: [name, location, country]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        imageUrl: { type: string, format: uri }
+        location: { type: string }
+        country: { type: string }
     LiveWeekendResponse:
       type: object
       required: [data]

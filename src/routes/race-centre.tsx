@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  RaceStatusBadge,
-  SampleDataBadge,
-} from "@/components/f1/RaceStatusBadge";
+import { RaceStatusBadge } from "@/components/f1/RaceStatusBadge";
 import { LiveTimingTable } from "@/components/f1/TimingTable";
+import { WeekendSessionPicker } from "@/components/f1/WeekendSessionPicker";
 import { CircuitMap } from "@/components/f1/CircuitMap";
 import {
   LapProgressionChart,
@@ -14,13 +12,11 @@ import {
   StrategyNotes,
 } from "@/components/f1/StrategyPanels";
 import { PageTitle } from "@/components/f1/SectionHeading";
-import { DriverIdentity } from "@/components/f1/Identity";
 import { Countdown } from "@/components/f1/Countdown";
-import { sampleSession } from "@/data/timing";
 import { circuitById } from "@/data/circuits";
-import { driverById, drivers } from "@/data/drivers";
 import type { SessionState } from "@/data/types";
-import type { Race, WeekendSession } from "@/api/client";
+import type { Race } from "@/api/client";
+import { getWeekendSessionState, selectWeekendSession } from "@/lib/weekend";
 import {
   currentSeasonQuery,
   nextRaceQuery,
@@ -81,14 +77,12 @@ function RaceCentre() {
   const circuit = circuitById(race.circuit.slug.replaceAll("_", "-"));
   const eventState = getEventState(race);
   const [view, setView] = useState<View>("timing");
-  const weekend = useQuery(liveWeekendQuery());
+  const weekend = useQuery(liveWeekendQuery(race.startsAt));
   const [selectedWeekendKey, setSelectedWeekendKey] = useState<number>();
-  const selectedWeekendSession =
-    weekend.data?.sessions.find(
-      (session) => session.sessionKey === selectedWeekendKey,
-    ) ??
-    weekend.data?.sessions.find((session) => session.type === "race") ??
-    weekend.data?.sessions.at(-1);
+  const selectedWeekendSession = selectWeekendSession(
+    weekend.data?.sessions ?? [],
+    selectedWeekendKey,
+  );
   const selectedWeekendState = selectedWeekendSession
     ? getWeekendSessionState(selectedWeekendSession)
     : "unavailable";
@@ -100,8 +94,6 @@ function RaceCentre() {
     ...liveSessionTimingQuery(selectedWeekendSession?.sessionKey ?? 0),
     enabled: view === "timing" && selectedWeekendState === "finished",
   });
-  const [sessionState, setSessionState] = useState<SessionState>("live");
-  const [selectedDriver, setSelectedDriver] = useState<string>(drivers[0]!.id);
   const [selectedStrategyDriver, setSelectedStrategyDriver] =
     useState<number>();
   const strategySession =
@@ -125,7 +117,6 @@ function RaceCentre() {
           driver.driverNumber !== selectedStrategy.driverNumber,
       )
     : undefined;
-  const selected = driverById(selectedDriver);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -218,27 +209,6 @@ function RaceCentre() {
             </button>
           ))}
         </nav>
-        {view === "circuit" && (
-          <div className="flex items-center gap-3">
-            <SampleDataBadge />
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              Preview state
-              <select
-                value={sessionState}
-                onChange={(e) =>
-                  setSessionState(e.target.value as SessionState)
-                }
-                className="rounded-sm border border-border bg-secondary px-2 py-1 text-xs text-foreground"
-              >
-                {sampleSession.states.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        )}
       </div>
 
       {view === "timing" && (
@@ -250,41 +220,33 @@ function RaceCentre() {
             />
           )}
           {weekend.error && (
-            <StatusPanel
-              title="Weekend schedule unavailable"
-              message={weekend.error.message}
-              tone="error"
-            />
+            <>
+              <StatusPanel
+                title="Weekend schedule unavailable"
+                message={weekend.error.message}
+                tone="error"
+              />
+              {getEventState(race) === "upcoming" && (
+                <div className="panel p-10 text-center">
+                  <RaceStatusBadge state="upcoming" />
+                  <p className="headline mt-4 text-2xl">{race.name}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    The detailed session schedule has not been published yet.
+                    Race starts in
+                  </p>
+                  <div className="mx-auto mt-5 max-w-xl">
+                    <Countdown targetIso={race.startsAt} />
+                  </div>
+                </div>
+              )}
+            </>
           )}
           {weekend.data && (
-            <div className="panel flex flex-wrap gap-2 p-3">
-              {weekend.data.sessions.map((session) => {
-                const state = getWeekendSessionState(session);
-                const active =
-                  selectedWeekendSession?.sessionKey === session.sessionKey;
-                return (
-                  <button
-                    key={session.sessionKey}
-                    onClick={() => setSelectedWeekendKey(session.sessionKey)}
-                    className={`flex min-w-36 items-center justify-between gap-3 rounded-sm border px-3 py-2 text-left ${active ? "border-primary bg-secondary" : "border-border hover:border-muted-foreground/50"}`}
-                  >
-                    <span>
-                      <span className="block text-xs font-semibold">
-                        {session.name}
-                      </span>
-                      <span className="mt-0.5 block tabular text-[10px] text-muted-foreground">
-                        {new Date(session.startsAt).toLocaleString("en-GB", {
-                          weekday: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </span>
-                    <RaceStatusBadge state={state} pulse={state === "live"} />
-                  </button>
-                );
-              })}
-            </div>
+            <WeekendSessionPicker
+              sessions={weekend.data.sessions}
+              selectedKey={selectedWeekendSession?.sessionKey}
+              onSelect={setSelectedWeekendKey}
+            />
           )}
           {selectedWeekendSession && selectedWeekendState === "upcoming" && (
             <div className="panel p-10 text-center">
@@ -367,53 +329,99 @@ function RaceCentre() {
           })()}
         </section>
       )}
-      {view === "circuit" && circuit && (
+      {view === "circuit" && (
         <section className="mt-6 grid gap-4 lg:grid-cols-3">
           <div className="panel p-6 lg:col-span-2">
             <div className="flex items-center justify-between">
-              <p className="headline text-sm">{circuit.name}</p>
-              <SampleDataBadge />
+              <div>
+                <p className="headline text-sm">
+                  {weekend.data?.circuit.name || race.circuit.name}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {weekend.data
+                    ? `${weekend.data.circuit.location}, ${weekend.data.circuit.country}`
+                    : `${race.circuit.locality}, ${race.circuit.country}`}
+                </p>
+              </div>
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {weekend.data ? "OpenF1" : "Local fallback"}
+              </span>
             </div>
-            <CircuitMap circuit={circuit} className="mx-auto mt-4 max-w-lg" />
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              Stylised outline with sector thirds and turn markers. Driver
-              position markers appear when positional telemetry is integrated —
-              none are fabricated.
-            </p>
+            {weekend.data?.circuit.imageUrl ? (
+              <div className="mt-6 flex min-h-80 items-center justify-center rounded-md bg-secondary/30 p-8">
+                <img
+                  src={weekend.data.circuit.imageUrl}
+                  alt={`${weekend.data.circuit.name} circuit layout`}
+                  className="max-h-96 w-full max-w-2xl object-contain"
+                />
+              </div>
+            ) : circuit ? (
+              <>
+                <CircuitMap
+                  circuit={circuit}
+                  className="mx-auto mt-4 max-w-lg"
+                />
+                <p className="mt-4 text-center text-xs text-muted-foreground">
+                  Provider image unavailable; showing the local circuit
+                  illustration.
+                </p>
+              </>
+            ) : (
+              <p className="py-20 text-center text-sm text-muted-foreground">
+                No circuit layout is available for this event.
+              </p>
+            )}
           </div>
           <div className="space-y-4">
             <div className="panel p-5">
-              <h3 className="headline text-sm">Circuit facts</h3>
+              <h3 className="headline text-sm">Circuit details</h3>
               <dl className="mt-4 space-y-3 text-sm">
-                <Fact label="Length" value={`${circuit.lengthKm} km`} />
-                <Fact label="Turns" value={String(circuit.turns)} />
                 <Fact
-                  label="First Grand Prix"
-                  value={String(circuit.firstGrandPrix)}
+                  label="Name"
+                  value={weekend.data?.circuit.name || race.circuit.name}
                 />
-                <Fact label="Lap record" value={circuit.lapRecord} />
+                <Fact
+                  label="Type"
+                  value={weekend.data?.circuit.type || "Not published"}
+                />
+                <Fact
+                  label="Location"
+                  value={
+                    weekend.data?.circuit.location || race.circuit.locality
+                  }
+                />
+                <Fact
+                  label="Country"
+                  value={weekend.data?.circuit.country || race.circuit.country}
+                />
+                <Fact
+                  label="Weekend sessions"
+                  value={String(weekend.data?.sessions.length ?? 0)}
+                />
               </dl>
             </div>
-            {selected && (
-              <div className="panel p-5">
-                <h3 className="headline text-sm">Following</h3>
-                <div className="mt-3">
-                  <DriverIdentity driverId={selected.id} size="lg" showNumber />
-                </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Position markers will highlight this driver once live
-                  telemetry is connected.
-                </p>
+            <div className="panel p-5">
+              <h3 className="headline text-sm">Weekend</h3>
+              <p className="mt-2 text-sm font-semibold">
+                {weekend.data?.meetingName || race.name}
+              </p>
+              <div className="mt-4 space-y-3">
+                {weekend.data?.sessions.map((session) => (
+                  <div
+                    key={session.sessionKey}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <span className="text-xs">{session.name}</span>
+                    <RaceStatusBadge
+                      state={getWeekendSessionState(session)}
+                      pulse={getWeekendSessionState(session) === "live"}
+                    />
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
           </div>
         </section>
-      )}
-      {view === "circuit" && !circuit && (
-        <StatusPanel
-          title="Circuit visualisation unavailable"
-          message={`A track illustration for ${race.circuit.name} has not been added yet.`}
-        />
       )}
       {view === "strategy" && strategyQuery.isPending && strategySession && (
         <StatusPanel
@@ -583,13 +591,5 @@ function getEventState(race: Race): SessionState {
   const now = Date.now();
   if (now < startsAt - 3 * 24 * 3600_000) return "upcoming";
   if (now <= startsAt + 4 * 3600_000) return "live";
-  return "finished";
-}
-
-function getWeekendSessionState(session: WeekendSession): SessionState {
-  const now = Date.now();
-  if (session.isCancelled) return "unavailable";
-  if (now < new Date(session.startsAt).getTime()) return "upcoming";
-  if (now <= new Date(session.endsAt).getTime()) return "live";
   return "finished";
 }

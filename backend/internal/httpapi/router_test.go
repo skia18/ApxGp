@@ -23,7 +23,7 @@ type fakeLiveTiming struct{}
 func (fakeLiveTiming) Timing(context.Context) (domain.LiveTiming, error) {
 	return domain.LiveTiming{SessionKey: 123, Rows: []domain.LiveTimingRow{}}, nil
 }
-func (fakeLiveTiming) Weekend(context.Context) (domain.LiveWeekend, error) {
+func (fakeLiveTiming) Weekend(context.Context, *time.Time) (domain.LiveWeekend, error) {
 	return domain.LiveWeekend{}, nil
 }
 func (fakeLiveTiming) SessionTiming(context.Context, int) (domain.LiveTiming, error) {

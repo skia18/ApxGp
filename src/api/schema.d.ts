@@ -147,7 +147,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get the latest meeting's real session schedule */
+        /** Get the meeting schedule nearest a race start time */
         get: operations["getLiveWeekend"];
         put?: never;
         post?: never;
@@ -521,8 +521,17 @@ export interface components {
         LiveWeekend: {
             meetingKey: number;
             meetingName: string;
+            circuit: components["schemas"]["WeekendCircuit"];
             sessions: components["schemas"]["WeekendSession"][];
             freshness: components["schemas"]["Freshness"];
+        };
+        WeekendCircuit: {
+            name: string;
+            type?: string;
+            /** Format: uri */
+            imageUrl?: string;
+            location: string;
+            country: string;
         };
         LiveWeekendResponse: {
             data: components["schemas"]["LiveWeekend"];
@@ -797,7 +806,10 @@ export interface operations {
     };
     getLiveWeekend: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Race start timestamp used to resolve the matching meeting; latest when omitted */
+                startsAt?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;

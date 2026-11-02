@@ -37,7 +37,7 @@ type ClassificationService interface {
 
 type LiveTimingService interface {
 	Timing(context.Context) (domain.LiveTiming, error)
-	Weekend(context.Context) (domain.LiveWeekend, error)
+	Weekend(context.Context, *time.Time) (domain.LiveWeekend, error)
 	SessionTiming(context.Context, int) (domain.LiveTiming, error)
 	SessionStrategy(context.Context, int) (domain.SessionStrategy, error)
 }
@@ -155,7 +155,16 @@ func NewRouter(health HealthChecker, calendar CalendarService, grid GridService,
 		writeJSON(w, http.StatusOK, map[string]any{"data": item})
 	})
 	mux.HandleFunc("GET /api/v1/live/weekend", func(w http.ResponseWriter, r *http.Request) {
-		item, err := liveTiming.Weekend(r.Context())
+		var startsAt *time.Time
+		if raw := r.URL.Query().Get("startsAt"); raw != "" {
+			parsed, parseErr := time.Parse(time.RFC3339, raw)
+			if parseErr != nil {
+				writeError(w, r, http.StatusBadRequest, "invalid_start_time", "startsAt must be an RFC 3339 timestamp.")
+				return
+			}
+			startsAt = &parsed
+		}
+		item, err := liveTiming.Weekend(r.Context(), startsAt)
 		if err != nil {
 			writeError(w, r, http.StatusServiceUnavailable, "weekend_unavailable", "The live weekend schedule is unavailable.")
 			return

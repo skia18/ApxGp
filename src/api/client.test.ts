@@ -4,6 +4,7 @@ import {
   getCurrentSeason,
   getDriver,
   getLiveTiming,
+  getLiveWeekend,
   listConstructors,
   listDrivers,
 } from "./client";
@@ -111,5 +112,22 @@ describe("API client", () => {
         ),
     );
     await expect(getLiveTiming()).resolves.toEqual(snapshot);
+  });
+
+  it("requests the weekend for the selected race timestamp", async () => {
+    const weekend = { meetingKey: 11, sessions: [] };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ data: weekend }), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getLiveWeekend("2026-11-08T17:00:00Z")).resolves.toEqual(
+      weekend,
+    );
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "http://localhost:8081/api/v1/live/weekend?startsAt=2026-11-08T17%3A00%3A00Z",
+    );
   });
 });

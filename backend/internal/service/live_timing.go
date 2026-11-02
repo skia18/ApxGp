@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/apex-f1/apex-f1/backend/internal/domain"
 )
@@ -12,7 +13,7 @@ type TimingProvider interface {
 }
 
 type WeekendProvider interface {
-	Weekend(context.Context) (domain.LiveWeekend, error)
+	Weekend(context.Context, *time.Time) (domain.LiveWeekend, error)
 	SessionTiming(context.Context, int) (domain.LiveTiming, error)
 	SessionStrategy(context.Context, int) (domain.SessionStrategy, error)
 }
@@ -35,11 +36,11 @@ func NewLiveTiming(primary, fallback TimingProvider) *LiveTiming {
 	return &LiveTiming{primary: primary, fallback: fallback, weekend: weekend}
 }
 
-func (s *LiveTiming) Weekend(ctx context.Context) (domain.LiveWeekend, error) {
+func (s *LiveTiming) Weekend(ctx context.Context, startsAt *time.Time) (domain.LiveWeekend, error) {
 	if s.weekend == nil {
 		return domain.LiveWeekend{}, fmt.Errorf("weekend provider unavailable")
 	}
-	return s.weekend.Weekend(ctx)
+	return s.weekend.Weekend(ctx, startsAt)
 }
 
 func (s *LiveTiming) SessionTiming(ctx context.Context, sessionKey int) (domain.LiveTiming, error) {

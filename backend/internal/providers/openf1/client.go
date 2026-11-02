@@ -68,9 +68,36 @@ func (c *Client) Timing(ctx context.Context) (domain.LiveTiming, error) {
 	return snapshot, nil
 }
 
-func (c *Client) Weekend(ctx context.Context) (domain.LiveWeekend, error) {
+func (c *Client) Weekend(ctx context.Context, startsAt *time.Time) (domain.LiveWeekend, error) {
+	var meetings []meetingPayload
+	queryKey, queryValue := "meeting_key", "latest"
+	if startsAt != nil {
+		queryKey, queryValue = "year", strconv.Itoa(startsAt.Year())
+	}
+	if err := c.getWithQuery(ctx, "meetings", queryKey, queryValue, &meetings); err != nil {
+		return domain.LiveWeekend{}, err
+	}
+	if len(meetings) == 0 {
+		return domain.LiveWeekend{}, fmt.Errorf("OpenF1 returned no meeting for %s=%s", queryKey, queryValue)
+	}
+	meeting := meetings[0]
+	if startsAt != nil {
+		closestDistance := meeting.DateStart.Sub(*startsAt).Abs()
+		for _, candidate := range meetings[1:] {
+			distance := candidate.DateStart.Sub(*startsAt).Abs()
+			if distance < closestDistance {
+				meeting, closestDistance = candidate, distance
+			}
+		}
+		if closestDistance > 7*24*time.Hour {
+			return domain.LiveWeekend{}, fmt.Errorf("OpenF1 has no meeting near %s", startsAt.Format(time.RFC3339))
+		}
+	}
+	if err := c.publicRatePause(ctx); err != nil {
+		return domain.LiveWeekend{}, err
+	}
 	var sessions []sessionPayload
-	if err := c.getWithQuery(ctx, "sessions", "meeting_key", "latest", &sessions); err != nil {
+	if err := c.getWithQuery(ctx, "sessions", "meeting_key", strconv.Itoa(meeting.MeetingKey), &sessions); err != nil {
 		return domain.LiveWeekend{}, err
 	}
 	result := domain.LiveWeekend{Sessions: make([]domain.WeekendSession, 0, len(sessions)), Freshness: domain.Freshness{Source: "openf1", RetrievedAt: time.Now().UTC()}}
@@ -79,6 +106,10 @@ func (c *Client) Weekend(ctx context.Context) (domain.LiveWeekend, error) {
 		result.MeetingName = item.Location + " Grand Prix"
 		result.Sessions = append(result.Sessions, domain.WeekendSession{SessionKey: item.SessionKey, MeetingKey: item.MeetingKey, Type: strings.ToLower(item.SessionType), Name: item.SessionName, StartsAt: item.DateStart, EndsAt: item.DateEnd, IsCancelled: item.IsCancelled})
 	}
+	sort.Slice(result.Sessions, func(i, j int) bool { return result.Sessions[i].StartsAt.Before(result.Sessions[j].StartsAt) })
+	result.MeetingKey = meeting.MeetingKey
+	result.MeetingName = meeting.MeetingName
+	result.Circuit = domain.WeekendCircuit{Name: meeting.CircuitShortName, Type: meeting.CircuitType, ImageURL: meeting.CircuitImage, Location: meeting.Location, Country: meeting.CountryName}
 	return result, nil
 }
 
@@ -325,6 +356,16 @@ type sessionPayload struct {
 	MeetingKey  int       `json:"meeting_key"`
 	Location    string    `json:"location"`
 	IsCancelled bool      `json:"is_cancelled"`
+}
+type meetingPayload struct {
+	MeetingKey       int       `json:"meeting_key"`
+	MeetingName      string    `json:"meeting_name"`
+	CircuitShortName string    `json:"circuit_short_name"`
+	CircuitType      string    `json:"circuit_type"`
+	CircuitImage     string    `json:"circuit_image"`
+	Location         string    `json:"location"`
+	CountryName      string    `json:"country_name"`
+	DateStart        time.Time `json:"date_start"`
 }
 type sessionResultPayload struct {
 	Position     int             `json:"position"`

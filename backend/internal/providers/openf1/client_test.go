@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTimingMapsLatestRows(t *testing.T) {
@@ -45,6 +46,59 @@ func TestTimingMapsLatestRows(t *testing.T) {
 	}
 	if row.GapToLeader == nil || *row.GapToLeader != "Leader" {
 		t.Fatalf("unexpected leader gap: %+v", row.GapToLeader)
+	}
+}
+
+func TestWeekendMapsCircuitMetadata(t *testing.T) {
+	transport := roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		payload := "[]"
+		switch request.URL.Path {
+		case "/sessions":
+			payload = `[{"session_key":42,"session_type":"Practice","session_name":"Practice 1","date_start":"2026-10-30T18:00:00Z","date_end":"2026-10-30T19:00:00Z","meeting_key":10,"location":"Mexico City","is_cancelled":false}]`
+		case "/meetings":
+			payload = `[{"meeting_key":10,"meeting_name":"Mexico City Grand Prix","circuit_short_name":"Hermanos Rodríguez","circuit_type":"Permanent","circuit_image":"https://example.test/circuit.png","location":"Mexico City","country_name":"Mexico"}]`
+		default:
+			t.Fatalf("unexpected path %s", request.URL.Path)
+		}
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(payload)), Header: http.Header{}}, nil
+	})
+	client := NewClient("https://example.test", "test-token", &http.Client{Transport: transport})
+	weekend, err := client.Weekend(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("Weekend() error = %v", err)
+	}
+	if weekend.MeetingName != "Mexico City Grand Prix" || weekend.Circuit.Name != "Hermanos Rodríguez" || weekend.Circuit.ImageURL == "" {
+		t.Fatalf("unexpected weekend: %+v", weekend)
+	}
+}
+
+func TestWeekendSelectsMeetingNearestRaceDate(t *testing.T) {
+	transport := roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		payload := "[]"
+		switch request.URL.Path {
+		case "/meetings":
+			if request.URL.Query().Get("year") != "2026" {
+				t.Fatalf("unexpected meetings query: %s", request.URL.RawQuery)
+			}
+			payload = `[{"meeting_key":10,"meeting_name":"Mexico City Grand Prix","date_start":"2026-10-30T00:00:00Z"},{"meeting_key":11,"meeting_name":"São Paulo Grand Prix","date_start":"2026-11-06T00:00:00Z"}]`
+		case "/sessions":
+			if request.URL.Query().Get("meeting_key") != "11" {
+				t.Fatalf("wrong meeting selected: %s", request.URL.RawQuery)
+			}
+			payload = `[{"session_key":50,"session_type":"Sprint","session_name":"Sprint","date_start":"2026-11-07T14:00:00Z","date_end":"2026-11-07T15:00:00Z","meeting_key":11}]`
+		default:
+			t.Fatalf("unexpected path %s", request.URL.Path)
+		}
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(payload)), Header: http.Header{}}, nil
+	})
+	client := NewClient("https://example.test", "test-token", &http.Client{Transport: transport})
+	raceStart := time.Date(2026, 11, 8, 17, 0, 0, 0, time.UTC)
+	weekend, err := client.Weekend(context.Background(), &raceStart)
+	if err != nil {
+		t.Fatalf("Weekend() error = %v", err)
+	}
+	if weekend.MeetingKey != 11 || len(weekend.Sessions) != 1 || weekend.Sessions[0].Type != "sprint" {
+		t.Fatalf("unexpected weekend: %+v", weekend)
 	}
 }
 

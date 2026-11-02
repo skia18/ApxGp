@@ -177,10 +177,12 @@ export async function getLiveTiming(signal?: AbortSignal): Promise<LiveTiming> {
 }
 
 export async function getLiveWeekend(
+  startsAt?: string,
   signal?: AbortSignal,
 ): Promise<LiveWeekend> {
+  const query = startsAt ? `?startsAt=${encodeURIComponent(startsAt)}` : "";
   const response = await get<components["schemas"]["LiveWeekendResponse"]>(
-    "/api/v1/live/weekend",
+    `/api/v1/live/weekend${query}`,
     signal,
   );
   return response.data;

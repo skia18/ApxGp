@@ -180,8 +180,17 @@ type WeekendSession struct {
 type LiveWeekend struct {
 	MeetingKey  int              `json:"meetingKey"`
 	MeetingName string           `json:"meetingName"`
+	Circuit     WeekendCircuit   `json:"circuit"`
 	Sessions    []WeekendSession `json:"sessions"`
 	Freshness   Freshness        `json:"freshness"`
+}
+
+type WeekendCircuit struct {
+	Name     string `json:"name"`
+	Type     string `json:"type,omitempty"`
+	ImageURL string `json:"imageUrl,omitempty"`
+	Location string `json:"location"`
+	Country  string `json:"country"`
 }
 
 type StrategyLap struct {

@@ -103,10 +103,10 @@ export const liveTimingQuery = () =>
     retry: 1,
   });
 
-export const liveWeekendQuery = () =>
+export const liveWeekendQuery = (startsAt?: string) =>
   queryOptions({
-    queryKey: ["live-weekend"],
-    queryFn: ({ signal }) => getLiveWeekend(signal),
+    queryKey: ["live-weekend", startsAt ?? "latest"],
+    queryFn: ({ signal }) => getLiveWeekend(startsAt, signal),
     staleTime: 60_000,
   });
 

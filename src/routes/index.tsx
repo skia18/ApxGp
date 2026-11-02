@@ -81,7 +81,7 @@ function HomePage() {
     constructorStandingsQuery(currentSeason.year),
   );
   const { data: sessions } = useSuspenseQuery(raceSessionsQuery(race.id));
-  const liveWeekend = useQuery(liveWeekendQuery());
+  const liveWeekend = useQuery(liveWeekendQuery(race.startsAt));
   const weekendSessions = liveWeekend.data?.sessions ?? [];
   const featured = carById("ferrari-2026");
   const raceStart = new Date(race.startsAt).getTime();
