@@ -14,6 +14,14 @@ type TimingProvider interface {
 type WeekendProvider interface {
 	Weekend(context.Context) (domain.LiveWeekend, error)
 	SessionTiming(context.Context, int) (domain.LiveTiming, error)
+	SessionStrategy(context.Context, int) (domain.SessionStrategy, error)
+}
+
+func (s *LiveTiming) SessionStrategy(ctx context.Context, sessionKey int) (domain.SessionStrategy, error) {
+	if s.weekend == nil {
+		return domain.SessionStrategy{}, fmt.Errorf("weekend provider unavailable")
+	}
+	return s.weekend.SessionStrategy(ctx, sessionKey)
 }
 
 type LiveTiming struct {

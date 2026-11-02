@@ -12,6 +12,8 @@ export type Classification =
 export type LiveTiming = components["schemas"]["LiveTiming"];
 export type LiveWeekend = components["schemas"]["LiveWeekend"];
 export type WeekendSession = components["schemas"]["WeekendSession"];
+export type SessionStrategy = components["schemas"]["SessionStrategy"];
+export type DriverStrategy = components["schemas"]["DriverStrategy"];
 
 const configuredBaseUrl = import.meta.env["VITE_API_BASE_URL"] as
   string | undefined;
@@ -190,6 +192,17 @@ export async function getLiveSessionTiming(
 ): Promise<LiveTiming> {
   const response = await get<components["schemas"]["LiveTimingResponse"]>(
     `/api/v1/live/sessions/${sessionKey}/timing`,
+    signal,
+  );
+  return response.data;
+}
+
+export async function getLiveSessionStrategy(
+  sessionKey: number,
+  signal?: AbortSignal,
+): Promise<SessionStrategy> {
+  const response = await get<components["schemas"]["SessionStrategyResponse"]>(
+    `/api/v1/live/sessions/${sessionKey}/strategy`,
     signal,
   );
   return response.data;

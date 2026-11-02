@@ -183,3 +183,40 @@ type LiveWeekend struct {
 	Sessions    []WeekendSession `json:"sessions"`
 	Freshness   Freshness        `json:"freshness"`
 }
+
+type StrategyLap struct {
+	LapNumber   int     `json:"lapNumber"`
+	Duration    float64 `json:"duration"`
+	IsPitOutLap bool    `json:"isPitOutLap"`
+}
+
+type StrategyStint struct {
+	Number         int     `json:"number"`
+	Compound       string  `json:"compound"`
+	StartLap       int     `json:"startLap"`
+	EndLap         int     `json:"endLap"`
+	TyreAgeAtStart float64 `json:"tyreAgeAtStart"`
+}
+
+type StrategyPitStop struct {
+	LapNumber    int      `json:"lapNumber"`
+	LaneDuration *float64 `json:"laneDuration,omitempty"`
+	StopDuration *float64 `json:"stopDuration,omitempty"`
+}
+
+type DriverStrategy struct {
+	DriverNumber int               `json:"driverNumber"`
+	DriverCode   string            `json:"driverCode"`
+	DriverName   string            `json:"driverName"`
+	TeamName     string            `json:"teamName"`
+	TeamColour   string            `json:"teamColour,omitempty"`
+	Laps         []StrategyLap     `json:"laps"`
+	Stints       []StrategyStint   `json:"stints"`
+	PitStops     []StrategyPitStop `json:"pitStops"`
+}
+
+type SessionStrategy struct {
+	SessionKey int              `json:"sessionKey"`
+	Drivers    []DriverStrategy `json:"drivers"`
+	Freshness  Freshness        `json:"freshness"`
+}

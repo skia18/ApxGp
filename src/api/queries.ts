@@ -10,6 +10,7 @@ import {
   getLiveTiming,
   getLiveWeekend,
   getLiveSessionTiming,
+  getLiveSessionStrategy,
   listRaceSessions,
   listConstructors,
   listDrivers,
@@ -113,5 +114,12 @@ export const liveSessionTimingQuery = (sessionKey: number) =>
   queryOptions({
     queryKey: ["live-session", sessionKey, "timing"],
     queryFn: ({ signal }) => getLiveSessionTiming(sessionKey, signal),
+    staleTime: 5 * 60_000,
+  });
+
+export const liveSessionStrategyQuery = (sessionKey: number) =>
+  queryOptions({
+    queryKey: ["live-session", sessionKey, "strategy"],
+    queryFn: ({ signal }) => getLiveSessionStrategy(sessionKey, signal),
     staleTime: 5 * 60_000,
   });

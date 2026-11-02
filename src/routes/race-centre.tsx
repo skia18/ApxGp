@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   RaceStatusBadge,
   SampleDataBadge,
@@ -10,13 +10,13 @@ import { CircuitMap } from "@/components/f1/CircuitMap";
 import {
   LapProgressionChart,
   StintPanel,
-  PositionChangesPanel,
+  PaceSummaryPanel,
   StrategyNotes,
 } from "@/components/f1/StrategyPanels";
 import { PageTitle } from "@/components/f1/SectionHeading";
 import { DriverIdentity } from "@/components/f1/Identity";
 import { Countdown } from "@/components/f1/Countdown";
-import { sampleStrategy, sampleSession } from "@/data/timing";
+import { sampleSession } from "@/data/timing";
 import { circuitById } from "@/data/circuits";
 import { driverById, drivers } from "@/data/drivers";
 import type { SessionState } from "@/data/types";
@@ -28,6 +28,7 @@ import {
   liveTimingQuery,
   liveWeekendQuery,
   liveSessionTimingQuery,
+  liveSessionStrategyQuery,
 } from "@/api/queries";
 
 export const Route = createFileRoute("/race-centre")({
@@ -101,18 +102,30 @@ function RaceCentre() {
   });
   const [sessionState, setSessionState] = useState<SessionState>("live");
   const [selectedDriver, setSelectedDriver] = useState<string>(drivers[0]!.id);
-
-  // Sample datasets are deterministic; memoise so table and panels agree.
-  const strategy = useMemo(() => sampleStrategy(), []);
-
+  const [selectedStrategyDriver, setSelectedStrategyDriver] =
+    useState<number>();
+  const strategySession =
+    selectedWeekendSession && selectedWeekendState !== "upcoming"
+      ? selectedWeekendSession
+      : weekend.data?.sessions
+          .filter((session) => getWeekendSessionState(session) === "finished")
+          .at(-1);
+  const strategyQuery = useQuery({
+    ...liveSessionStrategyQuery(strategySession?.sessionKey ?? 0),
+    enabled: view === "strategy" && Boolean(strategySession),
+  });
+  const selectedStrategy =
+    strategyQuery.data?.drivers.find(
+      (driver) => driver.driverNumber === selectedStrategyDriver,
+    ) ?? strategyQuery.data?.drivers[0];
+  const teamMateStrategy = selectedStrategy
+    ? strategyQuery.data?.drivers.find(
+        (driver) =>
+          driver.teamName === selectedStrategy.teamName &&
+          driver.driverNumber !== selectedStrategy.driverNumber,
+      )
+    : undefined;
   const selected = driverById(selectedDriver);
-  const selectedStrategy = strategy.find((s) => s.driverId === selectedDriver);
-  const teamMate = selected
-    ? drivers.find((d) => d.teamId === selected.teamId && d.id !== selected.id)
-    : undefined;
-  const teamMateStrategy = teamMate
-    ? strategy.find((s) => s.driverId === teamMate.id)
-    : undefined;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -205,7 +218,7 @@ function RaceCentre() {
             </button>
           ))}
         </nav>
-        {(view === "circuit" || view === "strategy") && (
+        {view === "circuit" && (
           <div className="flex items-center gap-3">
             <SampleDataBadge />
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -402,34 +415,93 @@ function RaceCentre() {
           message={`A track illustration for ${race.circuit.name} has not been added yet.`}
         />
       )}
-      {view === "strategy" && selectedStrategy && (
+      {view === "strategy" && strategyQuery.isPending && strategySession && (
+        <StatusPanel
+          title="Loading strategy data"
+          message={`Fetching laps, stints and pit stops for ${strategySession.name}…`}
+        />
+      )}
+      {view === "strategy" && strategyQuery.error && (
+        <StatusPanel
+          title="Strategy data unavailable"
+          message={strategyQuery.error.message}
+          tone="error"
+        />
+      )}
+      {view === "strategy" && !strategySession && !weekend.isPending && (
+        <StatusPanel
+          title="No completed session"
+          message="Strategy analysis will appear after the first session has recorded laps."
+        />
+      )}
+      {view === "strategy" &&
+        strategyQuery.data &&
+        strategyQuery.data.drivers.length === 0 && (
+          <StatusPanel
+            title="No strategy data"
+            message="The provider returned no drivers for this session."
+          />
+        )}
+      {view === "strategy" && selectedStrategy && strategySession && (
         <section className="mt-6 grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             <div className="panel flex flex-wrap items-center justify-between gap-3 p-4">
-              <label className="flex items-center gap-3 text-xs text-muted-foreground">
-                Analyse driver
-                <select
-                  value={selectedDriver}
-                  onChange={(event) => setSelectedDriver(event.target.value)}
-                  className="rounded-sm border border-border bg-secondary px-3 py-2 text-sm font-semibold text-foreground"
-                >
-                  {drivers.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <SampleDataBadge />
+              <div className="flex flex-wrap items-center gap-4">
+                <label className="flex items-center gap-3 text-xs text-muted-foreground">
+                  Session
+                  <select
+                    value={strategySession.sessionKey}
+                    onChange={(event) =>
+                      setSelectedWeekendKey(Number(event.target.value))
+                    }
+                    className="rounded-sm border border-border bg-secondary px-3 py-2 text-sm font-semibold text-foreground"
+                  >
+                    {weekend.data?.sessions
+                      .filter(
+                        (session) =>
+                          getWeekendSessionState(session) !== "upcoming",
+                      )
+                      .map((session) => (
+                        <option
+                          key={session.sessionKey}
+                          value={session.sessionKey}
+                        >
+                          {session.name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-3 text-xs text-muted-foreground">
+                  Analyse driver
+                  <select
+                    value={selectedStrategy.driverNumber}
+                    onChange={(event) =>
+                      setSelectedStrategyDriver(Number(event.target.value))
+                    }
+                    className="rounded-sm border border-border bg-secondary px-3 py-2 text-sm font-semibold text-foreground"
+                  >
+                    {strategyQuery.data?.drivers.map((driver) => (
+                      <option
+                        key={driver.driverNumber}
+                        value={driver.driverNumber}
+                      >
+                        {driver.driverCode} · {driver.driverName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                OpenF1 · session {strategySession.sessionKey}
+              </span>
             </div>
             <LapProgressionChart
-              selected={selectedDriver}
               primary={selectedStrategy}
               {...(teamMateStrategy ? { secondary: teamMateStrategy } : {})}
             />
             <div className="grid gap-4 sm:grid-cols-2">
               <StintPanel strategy={selectedStrategy} />
-              <PositionChangesPanel strategy={selectedStrategy} />
+              <PaceSummaryPanel strategy={selectedStrategy} />
             </div>
           </div>
           <StrategyNotes />

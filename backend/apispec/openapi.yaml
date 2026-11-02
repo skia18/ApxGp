@@ -163,6 +163,23 @@ paths:
               schema: { $ref: "#/components/schemas/LiveTimingResponse" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /api/v1/live/sessions/{sessionKey}/strategy:
+    get:
+      operationId: getLiveSessionStrategy
+      summary: Get lap and tyre strategy data for a meeting session
+      parameters:
+        - name: sessionKey
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Session strategy data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionStrategyResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
   /api/v1/drivers:
     get:
       operationId: listDrivers
@@ -633,3 +650,61 @@ components:
       required: [data]
       properties:
         data: { $ref: "#/components/schemas/LiveWeekend" }
+    StrategyLap:
+      type: object
+      required: [lapNumber, duration, isPitOutLap]
+      properties:
+        lapNumber: { type: integer }
+        duration: { type: number }
+        isPitOutLap: { type: boolean }
+    StrategyStint:
+      type: object
+      required: [number, compound, startLap, endLap, tyreAgeAtStart]
+      properties:
+        number: { type: integer }
+        compound: { type: string }
+        startLap: { type: integer }
+        endLap: { type: integer }
+        tyreAgeAtStart: { type: number }
+    StrategyPitStop:
+      type: object
+      required: [lapNumber]
+      properties:
+        lapNumber: { type: integer }
+        laneDuration: { type: number }
+        stopDuration: { type: number }
+    DriverStrategy:
+      type: object
+      required:
+        [driverNumber, driverCode, driverName, teamName, laps, stints, pitStops]
+      properties:
+        driverNumber: { type: integer }
+        driverCode: { type: string }
+        driverName: { type: string }
+        teamName: { type: string }
+        teamColour: { type: string }
+        laps:
+          { type: array, items: { $ref: "#/components/schemas/StrategyLap" } }
+        stints:
+          { type: array, items: { $ref: "#/components/schemas/StrategyStint" } }
+        pitStops:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/StrategyPitStop" },
+          }
+    SessionStrategy:
+      type: object
+      required: [sessionKey, drivers, freshness]
+      properties:
+        sessionKey: { type: integer }
+        drivers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/DriverStrategy" },
+          }
+        freshness: { $ref: "#/components/schemas/Freshness" }
+    SessionStrategyResponse:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/SessionStrategy" }

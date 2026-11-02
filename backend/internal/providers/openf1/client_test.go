@@ -80,6 +80,43 @@ func TestSessionTimingMapsFastestLapSectors(t *testing.T) {
 	}
 }
 
+func TestSessionStrategyMapsLapsStintsAndStops(t *testing.T) {
+	transport := roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		payload := "[]"
+		switch request.URL.Path {
+		case "/drivers":
+			payload = `[{"driver_number":4,"full_name":"Lando Norris","name_acronym":"NOR","team_name":"McLaren","team_colour":"FF8000"}]`
+		case "/laps":
+			payload = `[{"driver_number":4,"lap_number":2,"lap_duration":80.2,"is_pit_out_lap":false},{"driver_number":4,"lap_number":1,"lap_duration":null,"is_pit_out_lap":true}]`
+		case "/stints":
+			payload = `[{"driver_number":4,"stint_number":1,"compound":"MEDIUM","lap_start":1,"lap_end":18,"tyre_age_at_start":0}]`
+		case "/pit":
+			payload = `[{"driver_number":4,"lap_number":19,"lane_duration":21.3,"stop_duration":2.4}]`
+		default:
+			t.Fatalf("unexpected path %s", request.URL.Path)
+		}
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(payload)), Header: http.Header{}}, nil
+	})
+	client := NewClient("https://example.test", "test-token", &http.Client{Transport: transport})
+	strategy, err := client.SessionStrategy(context.Background(), 42)
+	if err != nil {
+		t.Fatalf("SessionStrategy() error = %v", err)
+	}
+	if len(strategy.Drivers) != 1 {
+		t.Fatalf("unexpected strategy: %+v", strategy)
+	}
+	driver := strategy.Drivers[0]
+	if len(driver.Laps) != 1 || driver.Laps[0].Duration != 80.2 {
+		t.Fatalf("unexpected laps: %+v", driver.Laps)
+	}
+	if len(driver.Stints) != 1 || driver.Stints[0].Compound != "MEDIUM" {
+		t.Fatalf("unexpected stints: %+v", driver.Stints)
+	}
+	if len(driver.PitStops) != 1 || driver.PitStops[0].StopDuration == nil || *driver.PitStops[0].StopDuration != 2.4 {
+		t.Fatalf("unexpected pit stops: %+v", driver.PitStops)
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (fn roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) { return fn(request) }

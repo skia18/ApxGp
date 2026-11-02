@@ -30,6 +30,10 @@ func (fakeLiveTiming) SessionTiming(context.Context, int) (domain.LiveTiming, er
 	return domain.LiveTiming{}, nil
 }
 
+func (fakeLiveTiming) SessionStrategy(context.Context, int) (domain.SessionStrategy, error) {
+	return domain.SessionStrategy{}, nil
+}
+
 func (fakeClassifications) Sessions(context.Context, string) ([]domain.Session, error) {
 	return []domain.Session{}, nil
 }

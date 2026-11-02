@@ -142,6 +142,81 @@ func (c *Client) SessionTiming(ctx context.Context, sessionKey int) (domain.Live
 	return domain.LiveTiming{SessionKey: sessionKey, MeetingKey: meetingKey, SessionName: "Session results", UpdatedAt: time.Now().UTC(), Rows: rows, Freshness: domain.Freshness{Source: "openf1", RetrievedAt: time.Now().UTC()}}, nil
 }
 
+func (c *Client) SessionStrategy(ctx context.Context, sessionKey int) (domain.SessionStrategy, error) {
+	key := strconv.Itoa(sessionKey)
+	var drivers []driverPayload
+	if err := c.getWithQuery(ctx, "drivers", "session_key", key, &drivers); err != nil {
+		return domain.SessionStrategy{}, err
+	}
+	if err := c.publicRatePause(ctx); err != nil {
+		return domain.SessionStrategy{}, err
+	}
+	var laps []lapPayload
+	if err := c.getWithQuery(ctx, "laps", "session_key", key, &laps); err != nil {
+		return domain.SessionStrategy{}, err
+	}
+	if err := c.publicRatePause(ctx); err != nil {
+		return domain.SessionStrategy{}, err
+	}
+	var stints []stintPayload
+	if err := c.getWithQuery(ctx, "stints", "session_key", key, &stints); err != nil {
+		return domain.SessionStrategy{}, err
+	}
+	if err := c.publicRatePause(ctx); err != nil {
+		return domain.SessionStrategy{}, err
+	}
+	var pitStops []pitPayload
+	if err := c.getWithQuery(ctx, "pit", "session_key", key, &pitStops); err != nil {
+		return domain.SessionStrategy{}, err
+	}
+
+	byNumber := make(map[int]*domain.DriverStrategy, len(drivers))
+	items := make([]domain.DriverStrategy, 0, len(drivers))
+	for _, driver := range drivers {
+		items = append(items, domain.DriverStrategy{
+			DriverNumber: driver.DriverNumber,
+			DriverCode:   driver.NameAcronym,
+			DriverName:   firstNonEmpty(driver.FullName, driver.BroadcastName),
+			TeamName:     driver.TeamName,
+			TeamColour:   driver.TeamColour,
+			Laps:         []domain.StrategyLap{},
+			Stints:       []domain.StrategyStint{},
+			PitStops:     []domain.StrategyPitStop{},
+		})
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].DriverCode < items[j].DriverCode })
+	for index := range items {
+		byNumber[items[index].DriverNumber] = &items[index]
+	}
+	for _, lap := range laps {
+		driver := byNumber[lap.DriverNumber]
+		if driver == nil || lap.LapDuration == nil || *lap.LapDuration <= 0 {
+			continue
+		}
+		driver.Laps = append(driver.Laps, domain.StrategyLap{LapNumber: lap.LapNumber, Duration: *lap.LapDuration, IsPitOutLap: lap.IsPitOutLap})
+	}
+	for _, stint := range stints {
+		driver := byNumber[stint.DriverNumber]
+		if driver == nil {
+			continue
+		}
+		driver.Stints = append(driver.Stints, domain.StrategyStint{Number: stint.StintNumber, Compound: stint.Compound, StartLap: stint.LapStart, EndLap: stint.LapEnd, TyreAgeAtStart: stint.TyreAgeAtStart})
+	}
+	for _, stop := range pitStops {
+		driver := byNumber[stop.DriverNumber]
+		if driver == nil {
+			continue
+		}
+		driver.PitStops = append(driver.PitStops, domain.StrategyPitStop{LapNumber: stop.LapNumber, LaneDuration: stop.LaneDuration, StopDuration: stop.StopDuration})
+	}
+	for index := range items {
+		sort.Slice(items[index].Laps, func(i, j int) bool { return items[index].Laps[i].LapNumber < items[index].Laps[j].LapNumber })
+		sort.Slice(items[index].Stints, func(i, j int) bool { return items[index].Stints[i].Number < items[index].Stints[j].Number })
+		sort.Slice(items[index].PitStops, func(i, j int) bool { return items[index].PitStops[i].LapNumber < items[index].PitStops[j].LapNumber })
+	}
+	return domain.SessionStrategy{SessionKey: sessionKey, Drivers: items, Freshness: domain.Freshness{Source: "openf1", RetrievedAt: time.Now().UTC()}}, nil
+}
+
 func (c *Client) publicRatePause(ctx context.Context) error {
 	if c.token != "" {
 		return nil
@@ -222,6 +297,23 @@ type lapPayload struct {
 	Sector1      *float64  `json:"duration_sector_1"`
 	Sector2      *float64  `json:"duration_sector_2"`
 	Sector3      *float64  `json:"duration_sector_3"`
+	IsPitOutLap  bool      `json:"is_pit_out_lap"`
+}
+
+type stintPayload struct {
+	DriverNumber   int     `json:"driver_number"`
+	StintNumber    int     `json:"stint_number"`
+	Compound       string  `json:"compound"`
+	LapStart       int     `json:"lap_start"`
+	LapEnd         int     `json:"lap_end"`
+	TyreAgeAtStart float64 `json:"tyre_age_at_start"`
+}
+
+type pitPayload struct {
+	DriverNumber int      `json:"driver_number"`
+	LapNumber    int      `json:"lap_number"`
+	LaneDuration *float64 `json:"lane_duration"`
+	StopDuration *float64 `json:"stop_duration"`
 }
 
 type sessionPayload struct {
