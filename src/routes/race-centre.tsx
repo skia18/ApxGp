@@ -5,6 +5,7 @@ import { RaceStatusBadge } from "@/components/f1/RaceStatusBadge";
 import { LiveTimingTable } from "@/components/f1/TimingTable";
 import { WeekendSessionPicker } from "@/components/f1/WeekendSessionPicker";
 import { CircuitMap } from "@/components/f1/CircuitMap";
+import { ProviderCircuitMap } from "@/components/f1/ProviderCircuitMap";
 import {
   LapProgressionChart,
   StintPanel,
@@ -347,7 +348,14 @@ function RaceCentre() {
                 {weekend.data ? "OpenF1" : "Local fallback"}
               </span>
             </div>
-            {weekend.data?.circuit.imageUrl ? (
+            {weekend.data && (weekend.data.circuit.path?.length ?? 0) > 1 ? (
+              <div className="mt-6 flex min-h-80 items-center justify-center rounded-md bg-secondary/30 p-4 sm:p-8">
+                <ProviderCircuitMap
+                  circuit={weekend.data.circuit}
+                  className="w-full max-w-3xl"
+                />
+              </div>
+            ) : weekend.data?.circuit.imageUrl ? (
               <div className="mt-6 flex min-h-80 items-center justify-center rounded-md bg-secondary/30 p-8">
                 <img
                   src={weekend.data.circuit.imageUrl}

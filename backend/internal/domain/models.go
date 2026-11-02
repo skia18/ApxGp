@@ -186,11 +186,25 @@ type LiveWeekend struct {
 }
 
 type WeekendCircuit struct {
-	Name     string `json:"name"`
-	Type     string `json:"type,omitempty"`
-	ImageURL string `json:"imageUrl,omitempty"`
-	Location string `json:"location"`
-	Country  string `json:"country"`
+	Name     string          `json:"name"`
+	Type     string          `json:"type,omitempty"`
+	ImageURL string          `json:"imageUrl,omitempty"`
+	Location string          `json:"location"`
+	Country  string          `json:"country"`
+	Rotation float64         `json:"rotation,omitempty"`
+	Path     []CircuitPoint  `json:"path"`
+	Corners  []CircuitCorner `json:"corners"`
+}
+
+type CircuitPoint struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+type CircuitCorner struct {
+	Number int     `json:"number"`
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
 }
 
 type StrategyLap struct {

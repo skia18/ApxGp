@@ -1,10 +1,19 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import {
   OrbitControls,
   ContactShadows,
   Environment,
+  Html,
   Lightformer,
+  useGLTF,
 } from "@react-three/drei";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -469,6 +478,213 @@ function CarModel({
   );
 }
 
+const HOTSPOTS: { id: ComponentId; position: [number, number, number] }[] = [
+  { id: "front-wing", position: [-2.35, 0.2, 0] },
+  { id: "nose", position: [-1.45, 0.45, 0] },
+  { id: "suspension", position: [-1.55, 0.35, 0.82] },
+  { id: "floor", position: [0.25, 0.12, 0.72] },
+  { id: "sidepods", position: [0.15, 0.5, 0.67] },
+  { id: "engine-cover", position: [0.85, 0.82, 0] },
+  { id: "rear-wing", position: [2.2, 0.85, 0] },
+];
+
+const NODE_COMPONENTS: Record<string, ComponentId> = {
+  "front-wing": "front-wing",
+  chassis: "nose",
+  halo: "engine-cover",
+  "front-suspension": "suspension",
+  "rear-suspension": "suspension",
+  "left-sidepod": "sidepods",
+  "right-sidepod": "sidepods",
+  floor: "floor",
+  "engine-cover": "engine-cover",
+  exhaust: "engine-cover",
+  "rear-wing": "rear-wing",
+};
+
+function componentForObject(object: THREE.Object3D): ComponentId | undefined {
+  let current: THREE.Object3D | null = object;
+  while (current) {
+    const match = NODE_COMPONENTS[current.name];
+    if (match) return match;
+    current = current.parent;
+  }
+  return undefined;
+}
+
+function createLiveryTexture(
+  teamName: string,
+  designation: string,
+  color: string,
+) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 256;
+  const context = canvas.getContext("2d")!;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "rgba(8, 8, 12, 0.82)";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = color;
+  context.fillRect(0, 0, 28, canvas.height);
+  context.fillStyle = "#ffffff";
+  context.font = "800 94px Arial, sans-serif";
+  context.textBaseline = "middle";
+  context.fillText(teamName.toUpperCase(), 64, 92);
+  context.fillStyle = "#d7d7dc";
+  context.font = "700 58px Arial, sans-serif";
+  context.fillText(designation.toUpperCase(), 68, 184);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+function RealisticCarModel({
+  color,
+  selected,
+  hovered,
+  onSelect,
+  onHover,
+  autoRotate,
+  teamName,
+  designation,
+}: {
+  color: string;
+  selected: ComponentId | null;
+  hovered: ComponentId | null;
+  onSelect: (id: ComponentId) => void;
+  onHover: (id: ComponentId | null) => void;
+  autoRotate: boolean;
+  teamName: string;
+  designation: string;
+}) {
+  const source = useGLTF("/models/f1-2026-concept.glb");
+  const group = useRef<THREE.Group>(null);
+  const model = useMemo(() => {
+    const clone = source.scene.clone(true);
+    clone.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      object.castShadow = true;
+      object.receiveShadow = true;
+      const materials = Array.isArray(object.material)
+        ? object.material
+        : [object.material];
+      const cloned = materials.map((material) => {
+        const next = material.clone();
+        if (next instanceof THREE.MeshStandardMaterial) {
+          const bodyFinish =
+            next.name.includes("chassis") ||
+            next.name.includes("sidepod") ||
+            next.name.includes("Halo") ||
+            next.name.includes("engine cover") ||
+            next.name.includes("Mirrors");
+          if (bodyFinish) {
+            next.color.set(color);
+            next.metalness = 0.72;
+            next.roughness = 0.22;
+          }
+        }
+        return next;
+      });
+      object.material = Array.isArray(object.material) ? cloned : cloned[0]!;
+    });
+    return clone;
+  }, [color, source.scene]);
+  const livery = useMemo(
+    () => createLiveryTexture(teamName, designation, color),
+    [color, designation, teamName],
+  );
+
+  useEffect(() => () => livery.dispose(), [livery]);
+
+  useFrame((_, delta) => {
+    if (group.current && autoRotate) group.current.rotation.y += delta * 0.25;
+  });
+
+  return (
+    <group ref={group} position={[0, 0.02, 0]}>
+      <primitive
+        object={model}
+        scale={0.001}
+        position={[-1.398, 0.031, 0]}
+        onClick={(event: ThreeEvent<MouseEvent>) => {
+          const component = componentForObject(event.object);
+          if (!component) return;
+          event.stopPropagation();
+          onSelect(component);
+        }}
+      />
+      {[0.72, -0.72].map((side) => (
+        <mesh
+          key={side}
+          position={[0.5, 0.47, side]}
+          rotation-y={side < 0 ? Math.PI : 0}
+        >
+          <planeGeometry args={[1.3, 0.32]} />
+          <meshBasicMaterial
+            map={livery}
+            transparent
+            polygonOffset
+            polygonOffsetFactor={-2}
+          />
+        </mesh>
+      ))}
+      <mesh position={[-1.55, 0.58, 0]} rotation-x={-Math.PI / 2}>
+        <planeGeometry args={[0.82, 0.2]} />
+        <meshBasicMaterial
+          map={livery}
+          transparent
+          polygonOffset
+          polygonOffsetFactor={-2}
+        />
+      </mesh>
+      {HOTSPOTS.map((hotspot) => {
+        const active = selected === hotspot.id;
+        const over = hovered === hotspot.id;
+        return (
+          <group key={hotspot.id} position={hotspot.position}>
+            <mesh
+              onClick={(event) => {
+                event.stopPropagation();
+                onSelect(hotspot.id);
+              }}
+              onPointerOver={(event) => {
+                event.stopPropagation();
+                onHover(hotspot.id);
+              }}
+              onPointerOut={() => onHover(null)}
+            >
+              <sphereGeometry args={[0.16, 16, 12]} />
+              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+            </mesh>
+            <mesh scale={active ? 1.35 : over ? 1.15 : 1}>
+              <sphereGeometry args={[0.045, 16, 12]} />
+              <meshStandardMaterial
+                color={active ? "#ffffff" : color}
+                emissive={active ? color : "#000000"}
+                emissiveIntensity={active ? 2 : 0}
+                depthTest={false}
+              />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+function ModelLoader() {
+  return (
+    <Html center>
+      <div className="rounded-sm border border-border bg-background/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground backdrop-blur">
+        Loading car
+      </div>
+    </Html>
+  );
+}
+
+useGLTF.preload("/models/f1-2026-concept.glb");
+
 /* ------------------------------------------------------------------ */
 
 type CameraView = {
@@ -541,6 +757,28 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
   const annotation = selected
     ? car.components.find((c) => c.id === selected)
     : null;
+  const selectedIndex = selected
+    ? car.components.findIndex((component) => component.id === selected)
+    : -1;
+
+  const selectRelative = (offset: number) => {
+    const start = selectedIndex >= 0 ? selectedIndex : 0;
+    const next =
+      (start + offset + car.components.length) % car.components.length;
+    setSelected(car.components[next]?.id ?? null);
+  };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("input, textarea, select")) return;
+      event.preventDefault();
+      selectRelative(event.key === "ArrowRight" ? 1 : -1);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   const reset = () => {
     setSelected(null);
@@ -578,14 +816,18 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
             color="#e10600"
           />
           <directionalLight position={[4, 6, 4]} intensity={0.6} />
-          <CarModel
-            color={teamColor}
-            selected={selected}
-            hovered={hovered}
-            onSelect={setSelected}
-            onHover={setHovered}
-            autoRotate={autoRotate && !selected}
-          />
+          <Suspense fallback={<ModelLoader />}>
+            <RealisticCarModel
+              color={teamColor}
+              selected={selected}
+              hovered={hovered}
+              onSelect={setSelected}
+              onHover={setHovered}
+              autoRotate={autoRotate && !selected}
+              teamName={teamName}
+              designation={car.designation}
+            />
+          </Suspense>
           <ContactShadows
             position={[0, 0.01, 0]}
             opacity={0.75}
@@ -663,6 +905,20 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
           </div>
           <div className="pointer-events-auto flex gap-1.5">
             <button
+              onClick={() => selectRelative(-1)}
+              className="rounded-sm border border-border bg-background/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground backdrop-blur"
+              aria-label="Previous component"
+            >
+              ← Part
+            </button>
+            <button
+              onClick={() => selectRelative(1)}
+              className="rounded-sm border border-border bg-background/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground backdrop-blur"
+              aria-label="Next component"
+            >
+              Part →
+            </button>
+            <button
               onClick={() => setAutoRotate((v) => !v)}
               className="rounded-sm border border-border bg-background/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground backdrop-blur"
             >
@@ -677,12 +933,13 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
           </div>
         </div>
 
-        <div className="pointer-events-none absolute left-4 top-4">
-          <p className="eyebrow text-[10px] text-muted-foreground">
-            {teamName} · {car.designation}
+        <div className="pointer-events-none absolute right-4 top-4 text-right">
+          <p className="headline text-lg text-foreground">{car.designation}</p>
+          <p className="eyebrow mt-1 text-[10px] text-muted-foreground">
+            {teamName} · {car.season}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
-            Drag to rotate · scroll to zoom · click a component
+          <p className="mt-1 text-[10px] text-muted-foreground/70">
+            Click once to select · ← → changes part
           </p>
         </div>
       </div>
@@ -704,6 +961,34 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
                 {annotation.deep}
               </p>
             </div>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => selectRelative(-1)}
+                className="rounded-sm border border-border bg-secondary px-3 py-2 text-xs font-semibold hover:border-primary/60"
+              >
+                ← Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => selectRelative(1)}
+                className="rounded-sm border border-border bg-secondary px-3 py-2 text-xs font-semibold hover:border-primary/60"
+              >
+                Next →
+              </button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {car.components.map((component) => (
+                <button
+                  key={component.id}
+                  type="button"
+                  onClick={() => setSelected(component.id)}
+                  className={`rounded-sm border px-2 py-1 text-[10px] font-semibold ${component.id === selected ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
+                >
+                  {component.name}
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="mt-4">
@@ -723,11 +1008,36 @@ export function CarViewer({ car, teamColor, teamName }: CarViewerProps) {
               ))}
             </div>
             <p className="mt-6 text-[11px] leading-relaxed text-muted-foreground/70">
-              Stylised geometry for annotation, not a dimensionally accurate CAD
-              model. Camera moves to the selected component.
+              Generic modern open-wheel model for technical education, not an
+              official team CAD model. Camera moves to the selected component.
             </p>
           </div>
         )}
+        <div className="mt-8 border-t border-border pt-4 text-[10px] leading-relaxed text-muted-foreground/70">
+          <p>
+            “F1 2026 concept (polygon model)” by Qvist_designs, adapted for
+            interactive component study.
+          </p>
+          <p className="mt-1">
+            <a
+              href="https://sketchfab.com/3d-models/f1-2026-concept-polygon-model-ea3bde709b1e4dc9b0ec8557d106ed42"
+              target="_blank"
+              rel="noreferrer"
+              className="underline hover:text-foreground"
+            >
+              Source
+            </a>{" "}
+            ·{" "}
+            <a
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noreferrer"
+              className="underline hover:text-foreground"
+            >
+              CC BY 4.0
+            </a>
+          </p>
+        </div>
       </aside>
     </div>
   );

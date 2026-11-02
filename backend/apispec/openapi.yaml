@@ -654,13 +654,37 @@ components:
         freshness: { $ref: "#/components/schemas/Freshness" }
     WeekendCircuit:
       type: object
-      required: [name, location, country]
+      required: [name, location, country, path, corners]
       properties:
         name: { type: string }
         type: { type: string }
         imageUrl: { type: string, format: uri }
         location: { type: string }
         country: { type: string }
+        rotation: { type: number }
+        path:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CircuitPoint" },
+          }
+        corners:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CircuitCorner" },
+          }
+    CircuitPoint:
+      type: object
+      required: [x, y]
+      properties:
+        x: { type: number }
+        y: { type: number }
+    CircuitCorner:
+      type: object
+      required: [number, x, y]
+      properties:
+        number: { type: integer }
+        x: { type: number }
+        y: { type: number }
     LiveWeekendResponse:
       type: object
       required: [data]

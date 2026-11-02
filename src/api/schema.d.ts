@@ -532,6 +532,18 @@ export interface components {
             imageUrl?: string;
             location: string;
             country: string;
+            rotation?: number;
+            path: components["schemas"]["CircuitPoint"][];
+            corners: components["schemas"]["CircuitCorner"][];
+        };
+        CircuitPoint: {
+            x: number;
+            y: number;
+        };
+        CircuitCorner: {
+            number: number;
+            x: number;
+            y: number;
         };
         LiveWeekendResponse: {
             data: components["schemas"]["LiveWeekend"];

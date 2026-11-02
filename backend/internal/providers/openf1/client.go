@@ -100,6 +100,16 @@ func (c *Client) Weekend(ctx context.Context, startsAt *time.Time) (domain.LiveW
 	if err := c.getWithQuery(ctx, "sessions", "meeting_key", strconv.Itoa(meeting.MeetingKey), &sessions); err != nil {
 		return domain.LiveWeekend{}, err
 	}
+	var circuitInfo circuitInfoPayload
+	if meeting.CircuitInfoURL != "" {
+		if err := c.publicRatePause(ctx); err != nil {
+			return domain.LiveWeekend{}, err
+		}
+		// Geometry enriches the circuit view. A missing geometry feed must not
+		// make the weekend schedule unavailable, so the provider image remains
+		// the fallback.
+		_ = c.getCircuitInfo(ctx, meeting.CircuitInfoURL, &circuitInfo)
+	}
 	result := domain.LiveWeekend{Sessions: make([]domain.WeekendSession, 0, len(sessions)), Freshness: domain.Freshness{Source: "openf1", RetrievedAt: time.Now().UTC()}}
 	for _, item := range sessions {
 		result.MeetingKey = item.MeetingKey
@@ -109,7 +119,15 @@ func (c *Client) Weekend(ctx context.Context, startsAt *time.Time) (domain.LiveW
 	sort.Slice(result.Sessions, func(i, j int) bool { return result.Sessions[i].StartsAt.Before(result.Sessions[j].StartsAt) })
 	result.MeetingKey = meeting.MeetingKey
 	result.MeetingName = meeting.MeetingName
-	result.Circuit = domain.WeekendCircuit{Name: meeting.CircuitShortName, Type: meeting.CircuitType, ImageURL: meeting.CircuitImage, Location: meeting.Location, Country: meeting.CountryName}
+	path := make([]domain.CircuitPoint, 0, min(len(circuitInfo.X), len(circuitInfo.Y)))
+	for index := 0; index < len(circuitInfo.X) && index < len(circuitInfo.Y); index++ {
+		path = append(path, domain.CircuitPoint{X: circuitInfo.X[index], Y: circuitInfo.Y[index]})
+	}
+	corners := make([]domain.CircuitCorner, 0, len(circuitInfo.Corners))
+	for _, corner := range circuitInfo.Corners {
+		corners = append(corners, domain.CircuitCorner{Number: corner.Number, X: corner.TrackPosition.X, Y: corner.TrackPosition.Y})
+	}
+	result.Circuit = domain.WeekendCircuit{Name: meeting.CircuitShortName, Type: meeting.CircuitType, ImageURL: meeting.CircuitImage, Location: meeting.Location, Country: meeting.CountryName, Rotation: circuitInfo.Rotation, Path: path, Corners: corners}
 	return result, nil
 }
 
@@ -297,6 +315,31 @@ func (c *Client) getWithQuery(ctx context.Context, path, key, value string, targ
 	return nil
 }
 
+func (c *Client) getCircuitInfo(ctx context.Context, rawURL string, target any) error {
+	endpoint, err := url.Parse(rawURL)
+	if err != nil || endpoint.Scheme != "https" || endpoint.Hostname() != "api.multiviewer.app" {
+		return fmt.Errorf("invalid circuit info URL")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return fmt.Errorf("create circuit info request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "Apex-F1/1.0")
+	response, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("request circuit info: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("circuit info returned status %d", response.StatusCode)
+	}
+	if err := json.NewDecoder(response.Body).Decode(target); err != nil {
+		return fmt.Errorf("decode circuit info: %w", err)
+	}
+	return nil
+}
+
 type driverPayload struct {
 	DriverNumber  int    `json:"driver_number"`
 	BroadcastName string `json:"broadcast_name"`
@@ -363,9 +406,22 @@ type meetingPayload struct {
 	CircuitShortName string    `json:"circuit_short_name"`
 	CircuitType      string    `json:"circuit_type"`
 	CircuitImage     string    `json:"circuit_image"`
+	CircuitInfoURL   string    `json:"circuit_info_url"`
 	Location         string    `json:"location"`
 	CountryName      string    `json:"country_name"`
 	DateStart        time.Time `json:"date_start"`
+}
+type circuitInfoPayload struct {
+	X        []float64 `json:"x"`
+	Y        []float64 `json:"y"`
+	Rotation float64   `json:"rotation"`
+	Corners  []struct {
+		Number        int `json:"number"`
+		TrackPosition struct {
+			X float64 `json:"x"`
+			Y float64 `json:"y"`
+		} `json:"trackPosition"`
+	} `json:"corners"`
 }
 type sessionResultPayload struct {
 	Position     int             `json:"position"`

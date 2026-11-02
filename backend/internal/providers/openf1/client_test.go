@@ -56,7 +56,9 @@ func TestWeekendMapsCircuitMetadata(t *testing.T) {
 		case "/sessions":
 			payload = `[{"session_key":42,"session_type":"Practice","session_name":"Practice 1","date_start":"2026-10-30T18:00:00Z","date_end":"2026-10-30T19:00:00Z","meeting_key":10,"location":"Mexico City","is_cancelled":false}]`
 		case "/meetings":
-			payload = `[{"meeting_key":10,"meeting_name":"Mexico City Grand Prix","circuit_short_name":"Hermanos Rodríguez","circuit_type":"Permanent","circuit_image":"https://example.test/circuit.png","location":"Mexico City","country_name":"Mexico"}]`
+			payload = `[{"meeting_key":10,"meeting_name":"Mexico City Grand Prix","circuit_short_name":"Hermanos Rodríguez","circuit_type":"Permanent","circuit_image":"https://example.test/circuit.png","circuit_info_url":"https://api.multiviewer.app/circuit","location":"Mexico City","country_name":"Mexico"}]`
+		case "/circuit":
+			payload = `{"rotation":36,"x":[0,10,20],"y":[5,15,5],"corners":[{"number":1,"trackPosition":{"x":10,"y":15}}]}`
 		default:
 			t.Fatalf("unexpected path %s", request.URL.Path)
 		}
@@ -69,6 +71,9 @@ func TestWeekendMapsCircuitMetadata(t *testing.T) {
 	}
 	if weekend.MeetingName != "Mexico City Grand Prix" || weekend.Circuit.Name != "Hermanos Rodríguez" || weekend.Circuit.ImageURL == "" {
 		t.Fatalf("unexpected weekend: %+v", weekend)
+	}
+	if len(weekend.Circuit.Path) != 3 || len(weekend.Circuit.Corners) != 1 || weekend.Circuit.Rotation != 36 {
+		t.Fatalf("unexpected circuit geometry: %+v", weekend.Circuit)
 	}
 }
 
